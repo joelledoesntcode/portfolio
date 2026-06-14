@@ -1,5 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fremtind/jkl-core/core.min.css'
+import '@fremtind/jkl-loader/loader.min.css'
 import './index.css'
 import App from './App.tsx'
 
