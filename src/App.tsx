@@ -10,6 +10,7 @@ import ProjectFishMarket from "./components/ProjectFishMarket";
 import ProjectPTF from "./components/ProjectPTF";
 import ProjectOmah from "./components/ProjectOmah";
 import ProjectCover from "./components/ProjectCover";
+import { asset } from "./lib/asset";
 import LoadingScreen from "./components/LoadingScreen";
 
 const CUBE_SIZE = 11;
@@ -154,7 +155,7 @@ function Face({
       {isUnfolded && hovered && (
         <Text
           position={[-CUBE_SIZE / 2, -CUBE_SIZE / 2 - 0.45, 0.01]}
-          font="/open-sans-300.woff"
+          font={asset("/open-sans-300.woff")}
           fontSize={0.45}
           color="#333"
           anchorX="left"
@@ -177,7 +178,7 @@ function TexturedFaceMaterial({
   texture: string;
   entrance: any;
 }) {
-  const tex = useTexture(texture);
+  const tex = useTexture(asset(texture));
   return (
     <a.meshBasicMaterial
       map={tex}
@@ -521,7 +522,7 @@ export default function App() {
       >
         <span style={{ display: "flex", alignItems: "center" }}>
           <img
-            src="/joelle.png"
+            src={asset("/joelle.png")}
             alt=""
             style={{
               // Sized in `em` so it always tracks the header text height —

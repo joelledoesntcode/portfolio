@@ -1,4 +1,5 @@
 import React from "react";
+import { asset } from "../lib/asset";
 
 type Props = {
   title: string;
@@ -220,7 +221,7 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
               }}
             >
               <img
-                src={item.src}
+                src={asset(item.src)}
                 alt={item.caption}
                 loading="lazy"
                 decoding="async"

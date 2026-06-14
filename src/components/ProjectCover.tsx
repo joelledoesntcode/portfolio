@@ -1,4 +1,5 @@
 import React from "react";
+import { asset } from "../lib/asset";
 
 type Props = { images: { src: string; caption: string }[] };
 
@@ -35,7 +36,7 @@ export default function ProjectCover({ images }: Props) {
         return (
           <img
             key={i}
-            src={item.src}
+            src={asset(item.src)}
             alt=""
             style={{
               position: "absolute",
