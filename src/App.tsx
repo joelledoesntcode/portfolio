@@ -603,7 +603,7 @@ export default function App() {
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
-          {selectedProject.title !== "Omah Mimpi" && selectedProject.title !== "Ode to the Modern Pilgrim" && selectedProject.title !== "Røyk — A Bergen Fish Market" && selectedProject.title !== "Peter Tatchell Foundation" && (
+          {selectedProject.title !== "Omah Mimpi" && selectedProject.title !== "Ode to the Modern Pilgrim" && selectedProject.title !== "Røyk — A Bergen Fish Market" && selectedProject.title !== "Peter Tatchell Foundation" && selectedProject.title !== "Waters of Unfinished Maps: Reinscribing the Malacca Strait" && (
             <div
               style={{
                 display: "flex",
@@ -627,7 +627,7 @@ export default function App() {
           )}
 
           {selectedProject.title === "Waters of Unfinished Maps: Reinscribing the Malacca Strait" ? (
-            <ProjectProfile />
+            <ProjectProfile title={selectedProject.title} />
           ) : selectedProject.title === "Ode to the Modern Pilgrim" ? (
             <ProjectPilgrim title={selectedProject.title} description={selectedProject.description} images={selectedProject.images} />
           ) : selectedProject.title === "Røyk — A Bergen Fish Market" ? (
