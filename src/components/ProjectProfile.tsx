@@ -4,31 +4,38 @@ import { asset } from "../lib/asset";
 // The title for this project is rendered by App.tsx (left column).
 const VIDEO_ID = "DjP4-UcvrB8";
 
-// The page is laid out in plain pixels exactly as dialed in. On first load we
-// capture the current viewport width as the reference, so the layout renders
-// at 1:1 (identical to the original). The whole canvas is then uniformly scaled
-// by viewport / reference on resize — so everything, fonts included, shrinks
-// or grows together while keeping the exact original arrangement.
+// The page is pixel-tuned at one fixed DESIGN_WIDTH (the author's effective CSS
+// width: a 2560px display at 150% OS scaling ≈ 1707 CSS px). We lock the canvas
+// to that width so the text↔image arrangement is byte-identical at every screen
+// size — text can never slide onto an image. We only ever scale DOWN, never up:
+//   • wider screens  → content stays its tuned size and just gains side margins
+//                      (so the *text's margins* change, images don't move);
+//   • narrower screens → the whole canvas shrinks uniformly to fit (no overlap,
+//                      no horizontal scrollbar).
+const DESIGN_WIDTH = 1707;
 
 export default function ProjectProfile({ title }: { title: string }) {
   // Facade: show a clean poster + play button until clicked, then load the
   // YouTube player. Keeps the preview free of the YouTube logo/title.
   const [playing, setPlaying] = useState(false);
 
-  // Reference width = the viewport width at first render (so initial scale = 1).
-  const [referenceWidth] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth : 1920
-  );
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  // Left margin that centres the (possibly scaled) canvas on wider screens.
+  const [marginLeft, setMarginLeft] = useState(0);
   const [innerHeight, setInnerHeight] = useState(0);
 
   useEffect(() => {
-    const onResize = () => setScale(window.innerWidth / referenceWidth);
+    const onResize = () => {
+      const vw = window.innerWidth;
+      const s = Math.min(1, vw / DESIGN_WIDTH);
+      setScale(s);
+      setMarginLeft(Math.max(0, (vw - DESIGN_WIDTH * s) / 2));
+    };
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [referenceWidth]);
+  }, []);
 
   // Track the unscaled content height (also as images load) so the outer
   // wrapper can reserve the *scaled* height — no extra whitespace, correct scroll.
@@ -52,7 +59,8 @@ export default function ProjectProfile({ title }: { title: string }) {
       <div
         ref={innerRef}
         style={{
-          width: `${referenceWidth}px`,
+          width: `${DESIGN_WIDTH}px`,
+          marginLeft: `${marginLeft}px`,
           transformOrigin: "top left",
           transform: `scale(${scale})`,
           boxSizing: "border-box",
