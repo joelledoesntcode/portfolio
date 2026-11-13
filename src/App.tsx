@@ -9,7 +9,7 @@ import ProjectPilgrim from "./components/ProjectPilgrim";
 import ProjectFishMarket from "./components/ProjectFishMarket";
 import ProjectPTF from "./components/ProjectPTF";
 import ProjectOmah from "./components/ProjectOmah";
-import ProjectCover from "./components/ProjectCover";
+import ProjectCover, { getNextMiscGallery } from "./components/ProjectCover";
 import { asset } from "./lib/asset";
 import { BG_COLOR } from "./lib/theme";
 import { usePhone } from "./lib/usePhone";
@@ -512,10 +512,6 @@ function RotatingCube({ size = 1 }: { size?: number }) {
         height: `${size}em`,
         perspective: `${size * 3}em`,
         verticalAlign: "middle",
-        marginLeft: "-1em",
-        // the cube tumbles in 3D, so its corners sweep outside the 1em box —
-        // leave enough clearance that it never clips into "next project"
-        marginRight: "1.1em",
       }}
     >
       <span
@@ -539,8 +535,23 @@ function RotatingCube({ size = 1 }: { size?: number }) {
   );
 }
 
+// The two project-navigation buttons at the foot of the screen.
+const navButton: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  fontSize: "0.8rem",
+  fontWeight: 300,
+  color: "#333",
+  border: "none",
+  padding: 0,
+  background: "transparent",
+  cursor: "crosshair",
+  pointerEvents: "auto",
+};
+
 export default function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [openMiscGallery, setOpenMiscGallery] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [unfold, setUnfold] = useState(false);
   const [showCV, setShowCV] = useState(false);
@@ -549,12 +560,18 @@ export default function App() {
   // the project page is its own scroll container, so resetting scroll means scrolling this node
   const projectPageRef = useRef<HTMLDivElement | null>(null);
 
-  // advance to the next project in cube order (wraps around)
-  const goToNextProject = () => {
+  // step through the projects in cube order (wraps around both ways)
+  const goToProject = (step: 1 | -1) => {
+    if (selectedProject?.title === "miscellaneous" && openMiscGallery) {
+      setOpenMiscGallery(step === -1 ? null : getNextMiscGallery(openMiscGallery));
+      projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
     if (!selectedProject || projects.length === 0) return;
     const idx = projects.findIndex((p) => p.title === selectedProject.title);
-    const next = projects[(idx + 1) % projects.length];
+    const next = projects[(idx + step + projects.length) % projects.length];
     setSelectedProject(next);
+    setOpenMiscGallery(null);
     // jump back to the top of the new project page
     projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
@@ -564,6 +581,7 @@ export default function App() {
       if (e.key === "Escape") {
         setUnfold(false);
         setSelectedProject(null);
+        setOpenMiscGallery(null);
         setShowCV(false);
         setShowContact(false);
       }
@@ -571,10 +589,6 @@ export default function App() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
-
-  // The misc page's content is short, so its "next project" link is pushed to
-  // the foot of the overlay rather than left floating under the thumbnails.
-  const isMisc = selectedProject?.title === "miscellaneous";
 
   const popupSpring = useWebSpring({
     opacity: selectedProject ? 1 : 0,
@@ -601,7 +615,7 @@ export default function App() {
       `}</style>
 
       {/* Header. On phones the logo grows, the name and the portfolio label sit
-          on one line pushed to opposite edges, and contact/cv drop to a bar at
+          on one line pushed to opposite edges, and navigation drops to a bar at
           the bottom of the screen. */}
       <h1
         style={{
@@ -658,6 +672,16 @@ export default function App() {
             >
               contact
             </span>
+            <button
+              onClick={() => setSelectedProject(projects[0] ?? null)}
+              style={{
+                ...navButton,
+                font: "inherit",
+                textDecoration: "underline",
+              }}
+            >
+              projects
+            </button>
             <span
               onClick={() => setShowCV(true)}
               style={{
@@ -672,7 +696,7 @@ export default function App() {
         )}
       </h1>
 
-      {/* On phones contact/cv live at the bottom of the screen instead. */}
+      {/* On phones the front-page navigation lives at the bottom of the screen. */}
       {phone && (
         <div
           style={{
@@ -695,6 +719,16 @@ export default function App() {
           >
             contact
           </span>
+          <button
+            onClick={() => setSelectedProject(projects[0] ?? null)}
+            style={{
+              ...navButton,
+              font: "inherit",
+              textDecoration: "underline",
+            }}
+          >
+            projects
+          </button>
           <span
             onClick={() => setShowCV(true)}
             style={{ cursor: "crosshair", textDecoration: "underline" }}
@@ -738,8 +772,9 @@ export default function App() {
 
       {/* Project Page */}
       {selectedProject && (
-        <aWeb.div
-          ref={projectPageRef}
+        <>
+          <aWeb.div
+            ref={projectPageRef}
           style={{
             ...popupSpring,
             position: "absolute",
@@ -751,9 +786,10 @@ export default function App() {
             zIndex: 20,
             overflowY: "auto",
             overflowX: "hidden",
-            ...(isMisc
-              ? { display: "flex", flexDirection: "column" as const }
-              : {}),
+            // leave room for the nav bar fixed at the foot of the screen
+            paddingBottom: phone
+              ? "calc(68px + env(safe-area-inset-bottom, 0px))"
+              : "72px",
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
@@ -791,69 +827,82 @@ export default function App() {
           ) : selectedProject.title === "Omah Mimpi" ? (
             <ProjectOmah title={selectedProject.title} description={selectedProject.description} images={selectedProject.images} />
           ) : selectedProject.title === "miscellaneous" ? (
-            <div style={{ flexShrink: 0 }}>
-              <ProjectCover images={selectedProject.images} />
-            </div>
+            <ProjectCover
+              openId={openMiscGallery}
+              onOpenGallery={(id) => {
+                setOpenMiscGallery(id);
+                projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+              }}
+            />
           ) : null}
 
-          {/* Close button */}
-          <button
-            onClick={() => {
-              setSelectedProject(null);
-              setUnfold(false);
-            }}
-            style={{
-              position: "fixed",
-              top: "20px",
-              // on phones it lines up with the 20px page margin; `padding: 0`
-              // keeps the glyph itself flush rather than the button box
-              right: phone ? "20px" : "30px",
-              padding: 0,
-              fontSize: "1.2rem",
-              lineHeight: 1,
-              border: "none",
-              background: "transparent",
-              // buttons inherit the UA default colour otherwise, which is
-              // system blue on iOS
-              color: "#000",
-              cursor: "crosshair",
-              zIndex: 1000,
-            }}
-          >
-            ✕
-          </button>
-
-          {/* Next project — sits at the very bottom-right of the page content */}
-          <div
-            style={{
-              textAlign: "right",
-              // on the misc page this pushes the link to the foot of the overlay
-              marginTop: isMisc ? "auto" : undefined,
-              // on phones, clear the home indicator / browser chrome
-              padding: phone
-                ? "0 20px calc(32px + env(safe-area-inset-bottom, 0px)) 20px"
-                : "0 30px 24px 30px",
-              boxSizing: "border-box",
-            }}
-          >
-            <button
-              onClick={goToNextProject}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                fontSize: "0.8rem",
-                fontWeight: 300,
-                color: "#333",
-                border: "none",
-                background: "transparent",
-                cursor: "crosshair",
-              }}
-            >
-              <RotatingCube />
-              <span style={{ textDecoration: "underline" }}>next project →</span>
-            </button>
-          </div>
         </aWeb.div>
+
+        {/* The ✕ and the nav bar sit OUTSIDE the page above. That element
+            carries react-spring's transform, which makes it the containing
+            block for any `position: fixed` descendant — so pinned controls
+            inside it scroll away with the content instead of staying put. */}
+          {/* Close button */}
+        <button
+          onClick={() => {
+            setSelectedProject(null);
+            setOpenMiscGallery(null);
+            setUnfold(false);
+          }}
+          style={{
+            position: "fixed",
+            top: "20px",
+            // on phones it lines up with the 20px page margin; `padding: 0`
+            // keeps the glyph itself flush rather than the button box
+            right: phone ? "20px" : "30px",
+            padding: 0,
+            fontSize: "1.2rem",
+            lineHeight: 1,
+            border: "none",
+            background: "transparent",
+            // buttons inherit the UA default colour otherwise, which is
+            // system blue on iOS
+            color: "#000",
+            cursor: "crosshair",
+            zIndex: 1000,
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Project navigation, fixed to the foot of the screen. The bar itself
+            ignores pointer events so the page still scrolls under it; only the
+            two buttons are clickable. */}
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "center",
+            backgroundColor: BG_COLOR,
+            // on phones, clear the home indicator / browser chrome
+            padding: phone
+              ? "12px 20px calc(16px + env(safe-area-inset-bottom, 0px)) 20px"
+              : "14px 30px 20px 30px",
+            boxSizing: "border-box",
+            zIndex: 900,
+            pointerEvents: "none",
+          }}
+        >
+          <button onClick={() => goToProject(-1)} style={{ ...navButton, justifySelf: "start" }}>
+            <span style={{ textDecoration: "underline" }}>← back</span>
+          </button>
+          <span aria-hidden="true" style={{ display: "flex", fontSize: "0.8rem" }}>
+            <RotatingCube />
+          </span>
+          <button onClick={() => goToProject(1)} style={{ ...navButton, justifySelf: "end" }}>
+            <span style={{ textDecoration: "underline" }}>next →</span>
+          </button>
+        </div>
+        </>
       )}
 
       {/* CV Page */}
