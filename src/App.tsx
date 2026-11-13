@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { a, useSpring } from "@react-spring/three";
 import { a as aWeb, useSpring as useWebSpring } from "@react-spring/web";
 import { OrbitControls, useTexture, Text } from "@react-three/drei";
@@ -9,8 +9,10 @@ import ProjectPilgrim from "./components/ProjectPilgrim";
 import ProjectFishMarket from "./components/ProjectFishMarket";
 import ProjectPTF from "./components/ProjectPTF";
 import ProjectOmah from "./components/ProjectOmah";
-import ProjectCover from "./components/ProjectCover";
+import ProjectCover, { getNextMiscGallery } from "./components/ProjectCover";
 import { asset } from "./lib/asset";
+import { BG_COLOR } from "./lib/theme";
+import { usePhone } from "./lib/usePhone";
 import LoadingScreen from "./components/LoadingScreen";
 
 const CUBE_SIZE = 11;
@@ -18,13 +20,33 @@ const UNFOLD_MULTIPLIER = 1.4;
 const DASH_SIZE = CUBE_SIZE * 0.06;
 const GAP_SIZE = CUBE_SIZE * 0.035;
 const LINE_COLOR = "#888888";
+const EDGE_COLOR = "#000000";
 const ACCENT_RED = "#8d0104";
-const LINE_OPACITY = 0.5;
+const LINE_OPACITY = 1;
 
 type Project = {
   title: string;
   description: string;
-  images: { src: string; caption: string; hero?: boolean; scale?: number }[];
+  images: {
+    src: string;
+    caption: string;
+    hero?: boolean;
+    scale?: number;
+    /** on phones, images sharing this tag sit side by side (see CollageCanvas) */
+    pair?: string;
+    /** on phones, width as a % of the space available (see CollageCanvas) */
+    phoneWidth?: number;
+    /** within a phone pair, sit against the top or bottom of the row */
+    phoneAlign?: "top" | "bottom";
+    /** within a phone pair, push down by this % of the row width (stagger) */
+    phoneOffsetY?: number;
+    /** push the pair to opposite edges of its row on phones */
+    phoneRowSpread?: boolean;
+    /** minimum row height on phones, in vw (opens up the stagger) */
+    phoneRowMinHeight?: number;
+    /** on phones, order as if the cell sat at this vh (see CollageCanvas) */
+    phoneOrder?: number;
+  }[];
 };
 
 type FaceProps = {
@@ -38,6 +60,10 @@ type FaceProps = {
   onClickFace: (project: Project) => void;
   unfoldCube: () => void;
   isUnfolded: boolean;
+  /** this face is currently the one closest to the camera */
+  isNearest: boolean;
+  /** lets the cube measure this face's world position each frame */
+  registerRef: (g: THREE.Group | null) => void;
   entrance: any;
 };
 
@@ -75,7 +101,7 @@ function FaceDottedEdges({ size, opacity }: { size: number; opacity: number }) {
   return (
     <a.lineSegments geometry={geom}>
       <a.lineDashedMaterial
-        color={LINE_COLOR}
+        color={EDGE_COLOR}
         dashSize={DASH_SIZE}
         gapSize={GAP_SIZE}
         transparent
@@ -97,9 +123,18 @@ function Face({
   onClickFace,
   unfoldCube,
   isUnfolded,
+  isNearest,
+  registerRef,
   entrance,
 }: FaceProps) {
   const [hovered, setHovered] = useState(false);
+
+  // The miscellaneous and Malacca Strait tiles have no cover image and show
+  // only their text + dotted edges, so nothing on them may paint — neither the
+  // blank panel nor the backing behind it.
+  const blankTile =
+    project.title === "miscellaneous" ||
+    project.title.startsWith("Waters of Unfinished Maps");
 
   const { pos, rot, edgeOpacity } = useSpring({
     pos: unfold ? unfoldPosition : position,
@@ -116,6 +151,7 @@ function Face({
 
   return (
     <a.group
+      ref={registerRef}
       position={pos}
       rotation={rot as THREE.EulerTuple}
       scale={scale}
@@ -126,7 +162,7 @@ function Face({
       }}
       onPointerOver={(e) => {
         e.stopPropagation();
-        if (isUnfolded) setHovered(true);
+        setHovered(true);
       }}
       onPointerOut={(e) => {
         e.stopPropagation();
@@ -134,6 +170,21 @@ function Face({
       }}
       className="canvas-face"
     >
+      {/* Opaque backing so the folded cube reads as a solid box rather than a
+          wireframe. FrontSide (not DoubleSide) so it is culled when a panel is
+          seen from behind — otherwise it would hide that panel's drawing.
+          Skipped entirely on the blank tiles, which stay see-through. */}
+      {!blankTile && (
+        <mesh position={[0, 0, -0.01]}>
+          <planeGeometry args={[CUBE_SIZE, CUBE_SIZE]} />
+          <a.meshBasicMaterial
+            transparent
+            opacity={entrance}
+            side={THREE.FrontSide}
+            color={BG_COLOR}
+          />
+        </mesh>
+      )}
       <mesh>
         <planeGeometry args={[CUBE_SIZE, CUBE_SIZE]} />
         {texture ? (
@@ -144,14 +195,9 @@ function Face({
           // any other blank face is white.
           <a.meshBasicMaterial
             transparent
-            opacity={
-              project.title === "miscellaneous" ||
-              project.title.startsWith("Waters of Unfinished Maps")
-                ? 0
-                : entrance
-            }
+            opacity={blankTile ? 0 : entrance}
             side={THREE.DoubleSide}
-            color={"white"}
+            color={BG_COLOR}
           />
         )}
       </mesh>
@@ -171,7 +217,7 @@ function Face({
         size={CUBE_SIZE}
         opacity={edgeOpacity as unknown as number}
       />
-      {isUnfolded && hovered && (
+      {(hovered || isNearest) && (
         <Text
           position={[-CUBE_SIZE / 2, -CUBE_SIZE / 2 - 0.45, 0.01]}
           font={asset("/open-sans-300.woff")}
@@ -205,7 +251,7 @@ function TexturedFaceMaterial({
       opacity={entrance}
       alphaTest={0.1}
       side={THREE.DoubleSide}
-      color={"white"}
+      color={BG_COLOR}
     />
   );
 }
@@ -225,7 +271,7 @@ function BoxDottedEdges({ opacity }: { opacity: number }) {
   return (
     <a.lineSegments geometry={geom}>
       <a.lineDashedMaterial
-        color={LINE_COLOR}
+        color={EDGE_COLOR}
         dashSize={DASH_SIZE}
         gapSize={GAP_SIZE}
         transparent
@@ -262,6 +308,35 @@ function Cube({
     config: { tension: 140, friction: 18 },
   });
 
+  // Track which face is currently closest to the camera, so the cube always
+  // names the project the viewer is looking at (not just the hovered one).
+  const faceRefs = useRef<(THREE.Group | null)[]>([]);
+  const [nearest, setNearest] = useState<number | null>(null);
+  const probe = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera }) => {
+    let best = -1;
+    let bestDistance = Infinity;
+    faceRefs.current.forEach((g, i) => {
+      if (!g) return;
+      g.getWorldPosition(probe);
+      const d = probe.distanceTo(camera.position);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = i;
+      }
+    });
+    // Hysteresis: two faces can sit at almost the same distance while the cube
+    // turns, and switching on every frame would re-render the whole cube. Only
+    // hand over once the new face is clearly in front.
+    if (best === -1 || best === nearest) return;
+    const current = faceRefs.current[nearest ?? -1];
+    if (current) {
+      current.getWorldPosition(probe);
+      if (bestDistance > probe.distanceTo(camera.position) * 0.98) return;
+    }
+    setNearest(best);
+  });
+
   const faces = [
     {
       position: [0, 0, half],
@@ -275,13 +350,13 @@ function Cube({
           "We have an innate desire to shape the earth for our own, echoing our ancestral pilgrims’ relentless pursuit of innovation. Now, we are simply contemporary travellers, finding spaces we can control in a city so unforgiving to ownership of our environment. <br/><br/>My proposal pays tribute to the drive to transform the earth, through an adaptable tower that invites users to shape their environment - an exploration of the human condition. <br/><br/>The Earthwork theme invited me to engage with the site’s layered history—Roman tracks and ancient brick culverts. <br/><br/>Inspired by Roman engineers, the “Fathers of Trusses,” and Canterbury builders who raised cathedrals, I reflected on humanity’s timeless pursuit of progress and creation.",
         images: [
           { src: "/antecollage.png", caption: "", scale: 1.8 },
-          { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85 },
-          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42 },
+          { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85, pair: "roman", phoneWidth: 47, phoneAlign: "top" as const, phoneOrder: 28 },
+          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42, pair: "roman", phoneWidth: 47, phoneAlign: "bottom" as const, phoneRowSpread: true, phoneRowMinHeight: 76 },
           { src: "/mainante.png", caption: "Mhehehe", scale: 1.05 },
-          { src: "/1.PNG", caption: "" },
-          { src: "/2.PNG", caption: "" },
-          { src: "/3.png", caption: "" },
-          { src: "/4.png", caption: "" },
+          { src: "/1.PNG", caption: "", pair: "sketches-a" },
+          { src: "/2.PNG", caption: "", pair: "sketches-a" },
+          { src: "/3.png", caption: "", pair: "sketches" },
+          { src: "/4.png", caption: "", pair: "sketches" },
           { src: "/backrrender.png", caption: "", scale: 0.8 },
         ],
       },
@@ -298,14 +373,14 @@ function Cube({
           "This market celebrates the art of smoking fish, a cultural practice revered in Bergen. The design aims to capture the beauty of communal dining and the magic of food preparation. The structure aspires to exist as a unique modern building among its historical surroundings while referencing the site’s vernacular architecture. It is centered around placemaking, inviting in the whole community.",
         images: [
           { src: "/undergif.gif", caption: "", hero: true },
-          { src: "/siteplanberg2.jpg", caption: "" },
-          { src: "/vern3.png", caption: "" },
+          { src: "/siteplanberg2.jpg", caption: "", pair: "berg-site" },
+          { src: "/vern3.png", caption: "", pair: "berg-site" },
           { src: "/harberg.jpg", caption: "", hero: true },
-          { src: "/bergsketch.jpg", caption: "" },
+          { src: "/bergsketch.jpg", caption: "", phoneWidth: 70 },
           { src: "/model.png", caption: "" },
           { src: "/axo berg.jpg", caption: "" },
           { src: "/filletberg.jpg", caption: "" },
-          { src: "/back berg.jpg", caption: "", hero: true },
+          { src: "/back berg.jpg", caption: "", hero: true, phoneOrder: 41 },
         ],
       },
     },
@@ -365,10 +440,10 @@ function Cube({
         images: [
           { src: "/omah1.gif", caption: "" },
           { src: "/omah3.gif?v=2", caption: "", scale: 1.3 },
-          { src: "/omah_weave1.png", caption: "" },
-          { src: "/omah_weave2.PNG", caption: "" },
-          { src: "/omah_ver1.png", caption: "" },
-          { src: "/omah_ver2.png", caption: "" },
+          { src: "/omah_weave1.png", caption: "", pair: "weave", phoneWidth: 60 },
+          { src: "/omah_weave2.PNG", caption: "", pair: "weave", phoneWidth: 30 },
+          { src: "/omah_ver1.png", caption: "", pair: "ver" },
+          { src: "/omah_ver2.png", caption: "", pair: "ver" },
           { src: "/omah_plan.png", caption: "" },
           { src: "/diaomah.jpg", caption: "", scale: 1.8 },
         ],
@@ -409,6 +484,8 @@ function Cube({
           onClickFace={(project) => onSelect(project)}
           unfoldCube={() => setUnfold(true)}
           isUnfolded={unfold}
+          isNearest={nearest === i}
+          registerRef={(g) => (faceRefs.current[i] = g)}
           entrance={entrance}
         />
       ))}
@@ -435,8 +512,6 @@ function RotatingCube({ size = 1 }: { size?: number }) {
         height: `${size}em`,
         perspective: `${size * 3}em`,
         verticalAlign: "middle",
-        marginLeft: "-1em",
-        marginRight: "0.5em",
       }}
     >
       <span
@@ -460,21 +535,45 @@ function RotatingCube({ size = 1 }: { size?: number }) {
   );
 }
 
+// The two project-navigation buttons at the foot of the screen.
+const navButton: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  fontSize: "0.8rem",
+  fontWeight: 300,
+  color: "#333",
+  border: "none",
+  padding: 0,
+  background: "transparent",
+  cursor: "crosshair",
+  pointerEvents: "auto",
+};
+
 export default function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [openMiscGallery, setOpenMiscGallery] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [unfold, setUnfold] = useState(false);
   const [showCV, setShowCV] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const phone = usePhone();
+  // the project page is its own scroll container, so resetting scroll means scrolling this node
+  const projectPageRef = useRef<HTMLDivElement | null>(null);
 
-  // advance to the next project in cube order (wraps around)
-  const goToNextProject = () => {
+  // step through the projects in cube order (wraps around both ways)
+  const goToProject = (step: 1 | -1) => {
+    if (selectedProject?.title === "miscellaneous" && openMiscGallery) {
+      setOpenMiscGallery(step === -1 ? null : getNextMiscGallery(openMiscGallery));
+      projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      return;
+    }
     if (!selectedProject || projects.length === 0) return;
     const idx = projects.findIndex((p) => p.title === selectedProject.title);
-    const next = projects[(idx + 1) % projects.length];
+    const next = projects[(idx + step + projects.length) % projects.length];
     setSelectedProject(next);
+    setOpenMiscGallery(null);
     // jump back to the top of the new project page
-    window.scrollTo(0, 0);
+    projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   useEffect(() => {
@@ -482,6 +581,7 @@ export default function App() {
       if (e.key === "Escape") {
         setUnfold(false);
         setSelectedProject(null);
+        setOpenMiscGallery(null);
         setShowCV(false);
         setShowContact(false);
       }
@@ -505,7 +605,7 @@ export default function App() {
       />
       <style>{`
         html, body, #root { height: 100%; }
-        body { margin: 0; font-family: 'Open Sans', sans-serif; cursor: crosshair; }
+        body { margin: 0; font-family: 'Open Sans', sans-serif; cursor: crosshair; background: ${BG_COLOR}; }
         .canvas-face { cursor: crosshair; }
         a, button { cursor: crosshair; }
         @keyframes spin-cube {
@@ -514,7 +614,9 @@ export default function App() {
         }
       `}</style>
 
-      {/* Header */}
+      {/* Header. On phones the logo grows, the name and the portfolio label sit
+          on one line pushed to opposite edges, and navigation drops to a bar at
+          the bottom of the screen. */}
       <h1
         style={{
           position: "absolute",
@@ -522,7 +624,7 @@ export default function App() {
           left: "20px",
           right: "20px",
           margin: 0,
-          fontSize: "1.05rem",
+          fontSize: phone ? "0.95rem" : "1.05rem",
           fontWeight: 300,
           color: "#333",
           zIndex: 10,
@@ -530,51 +632,121 @@ export default function App() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: "12px",
         }}
       >
-        <span style={{ display: "flex", alignItems: "center" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: phone ? "10px" : 0 }}>
           <img
             src={asset("/joelle.png")}
             alt=""
             style={{
               // Sized in `em` so it always tracks the header text height —
               // keep it em-based whenever the opening-page text/font changes.
-              height: "1em",
+              // px on phones so the logo size is independent of the type size
+              // (em elsewhere, so it tracks the header text height)
+              height: phone ? "58px" : "1em",
               width: "auto",
               verticalAlign: "middle",
-              marginRight: "8px",
+              marginRight: phone ? 0 : "8px",
+              flexShrink: 0,
             }}
           />
-          <span style={{ color: "#000", fontWeight: 600 }}>joelle warsono</span>&nbsp;architectural portfolio
+          <span style={{ color: "#000", fontWeight: 600, whiteSpace: "nowrap" }}>
+            joelle warsono
+          </span>
+          {!phone && <>&nbsp;architectural portfolio</>}
         </span>
-        <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        {phone ? (
+          // one line: the label is pushed to the opposite edge by the h1's
+          // space-between
+          <span style={{ whiteSpace: "nowrap" }}>architectural portfolio</span>
+        ) : (
+          <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <span
+              onClick={() => setShowContact(true)}
+              style={{
+                pointerEvents: "auto",
+                cursor: "crosshair",
+                textDecoration: "underline",
+              }}
+            >
+              contact
+            </span>
+            <button
+              onClick={() => setSelectedProject(projects[0] ?? null)}
+              style={{
+                ...navButton,
+                font: "inherit",
+                textDecoration: "underline",
+              }}
+            >
+              projects
+            </button>
+            <span
+              onClick={() => setShowCV(true)}
+              style={{
+                pointerEvents: "auto",
+                cursor: "crosshair",
+                textDecoration: "underline",
+              }}
+            >
+              cv
+            </span>
+          </span>
+        )}
+      </h1>
+
+      {/* On phones the front-page navigation lives at the bottom of the screen. */}
+      {phone && (
+        <div
+          style={{
+            position: "absolute",
+            left: "20px",
+            right: "20px",
+            bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "1.05rem",
+            fontWeight: 300,
+            color: "#333",
+            zIndex: 10,
+          }}
+        >
           <span
             onClick={() => setShowContact(true)}
-            style={{
-              pointerEvents: "auto",
-              cursor: "crosshair",
-              textDecoration: "underline",
-            }}
+            style={{ cursor: "crosshair", textDecoration: "underline" }}
           >
             contact
           </span>
-          <span
-            onClick={() => setShowCV(true)}
+          <button
+            onClick={() => setSelectedProject(projects[0] ?? null)}
             style={{
-              pointerEvents: "auto",
-              cursor: "crosshair",
+              ...navButton,
+              font: "inherit",
               textDecoration: "underline",
             }}
           >
+            projects
+          </button>
+          <span
+            onClick={() => setShowCV(true)}
+            style={{ cursor: "crosshair", textDecoration: "underline" }}
+          >
             cv
           </span>
-        </span>
-      </h1>
+        </div>
+      )}
 
       {/* 3D Canvas */}
       <Canvas
         camera={{
-          position: [CUBE_SIZE * 2.4, CUBE_SIZE * 2.4, CUBE_SIZE * 2.4],
+          // Phones start further back: the viewport is much narrower, so the
+          // cube (and the unfolded panels) need the extra distance to fit.
+          // Applied on mount, which is what sets the opening view.
+          position: phone
+            ? [CUBE_SIZE * 3.6, CUBE_SIZE * 3.6, CUBE_SIZE * 3.6]
+            : [CUBE_SIZE * 2.4, CUBE_SIZE * 2.4, CUBE_SIZE * 2.4],
           fov: 50,
         }}
         onPointerMissed={() => setUnfold(false)}
@@ -600,7 +772,9 @@ export default function App() {
 
       {/* Project Page */}
       {selectedProject && (
-        <aWeb.div
+        <>
+          <aWeb.div
+            ref={projectPageRef}
           style={{
             ...popupSpring,
             position: "absolute",
@@ -608,10 +782,16 @@ export default function App() {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "white",
+            backgroundColor: BG_COLOR,
             zIndex: 20,
             overflowY: "auto",
             overflowX: "hidden",
+            // Keep padding inside the viewport so the final images can scroll
+            // fully above the fixed navigation, with extra breathing room.
+            boxSizing: "border-box",
+            paddingBottom: phone
+              ? "calc(92px + env(safe-area-inset-bottom, 0px))"
+              : "96px",
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
@@ -649,55 +829,82 @@ export default function App() {
           ) : selectedProject.title === "Omah Mimpi" ? (
             <ProjectOmah title={selectedProject.title} description={selectedProject.description} images={selectedProject.images} />
           ) : selectedProject.title === "miscellaneous" ? (
-            <ProjectCover images={selectedProject.images} />
+            <ProjectCover
+              openId={openMiscGallery}
+              onOpenGallery={(id) => {
+                setOpenMiscGallery(id);
+                projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+              }}
+            />
           ) : null}
 
-          {/* Close button */}
-          <button
-            onClick={() => {
-              setSelectedProject(null);
-              setUnfold(false);
-            }}
-            style={{
-              position: "fixed",
-              top: "20px",
-              right: "30px",
-              fontSize: "1.2rem",
-              border: "none",
-              background: "transparent",
-              cursor: "crosshair",
-              zIndex: 1000,
-            }}
-          >
-            ✕
-          </button>
-
-          {/* Next project — sits at the very bottom-right of the page content */}
-          <div
-            style={{
-              textAlign: "right",
-              padding: "0 30px 24px 30px",
-              boxSizing: "border-box",
-            }}
-          >
-            <button
-              onClick={goToNextProject}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                fontSize: "0.8rem",
-                fontWeight: 300,
-                color: "#333",
-                border: "none",
-                background: "transparent",
-                cursor: "crosshair",
-              }}
-            >
-              <RotatingCube />
-              <span style={{ textDecoration: "underline" }}>next project →</span>
-            </button>
-          </div>
         </aWeb.div>
+
+        {/* The ✕ and the nav bar sit OUTSIDE the page above. That element
+            carries react-spring's transform, which makes it the containing
+            block for any `position: fixed` descendant — so pinned controls
+            inside it scroll away with the content instead of staying put. */}
+          {/* Close button */}
+        <button
+          onClick={() => {
+            setSelectedProject(null);
+            setOpenMiscGallery(null);
+            setUnfold(false);
+          }}
+          style={{
+            position: "fixed",
+            top: "20px",
+            // on phones it lines up with the 20px page margin; `padding: 0`
+            // keeps the glyph itself flush rather than the button box
+            right: phone ? "20px" : "30px",
+            padding: 0,
+            fontSize: "1.2rem",
+            lineHeight: 1,
+            border: "none",
+            background: "transparent",
+            // buttons inherit the UA default colour otherwise, which is
+            // system blue on iOS
+            color: "#000",
+            cursor: "crosshair",
+            zIndex: 1000,
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Project navigation, fixed to the foot of the screen. The bar itself
+            ignores pointer events so the page still scrolls under it; only the
+            two buttons are clickable. */}
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "center",
+            backgroundColor: BG_COLOR,
+            // on phones, clear the home indicator / browser chrome
+            padding: phone
+              ? "12px 20px calc(16px + env(safe-area-inset-bottom, 0px)) 20px"
+              : "14px 30px 20px 30px",
+            boxSizing: "border-box",
+            zIndex: 900,
+            pointerEvents: "none",
+          }}
+        >
+          <button onClick={() => goToProject(-1)} style={{ ...navButton, justifySelf: "start" }}>
+            <span style={{ textDecoration: "underline" }}>← back</span>
+          </button>
+          <span aria-hidden="true" style={{ display: "flex", fontSize: "0.8rem" }}>
+            <RotatingCube />
+          </span>
+          <button onClick={() => goToProject(1)} style={{ ...navButton, justifySelf: "end" }}>
+            <span style={{ textDecoration: "underline" }}>next →</span>
+          </button>
+        </div>
+        </>
       )}
 
       {/* CV Page */}
@@ -709,7 +916,7 @@ export default function App() {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "white",
+            backgroundColor: BG_COLOR,
             zIndex: 30,
             overflowY: "auto",
             padding: "60px 60px 60px 60px",
@@ -728,10 +935,17 @@ export default function App() {
             style={{
               position: "fixed",
               top: "20px",
-              right: "30px",
+              // on phones it lines up with the 20px page margin; `padding: 0`
+              // keeps the glyph itself flush rather than the button box
+              right: phone ? "20px" : "30px",
+              padding: 0,
               fontSize: "1.2rem",
+              lineHeight: 1,
               border: "none",
               background: "transparent",
+              // buttons inherit the UA default colour otherwise, which is
+              // system blue on iOS
+              color: "#000",
               cursor: "crosshair",
               zIndex: 1000,
             }}
@@ -750,7 +964,7 @@ export default function App() {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "white",
+            backgroundColor: BG_COLOR,
             zIndex: 30,
             overflowY: "auto",
             padding: "60px 60px 60px 60px",
@@ -782,10 +996,17 @@ export default function App() {
             style={{
               position: "fixed",
               top: "20px",
-              right: "30px",
+              // on phones it lines up with the 20px page margin; `padding: 0`
+              // keeps the glyph itself flush rather than the button box
+              right: phone ? "20px" : "30px",
+              padding: 0,
               fontSize: "1.2rem",
+              lineHeight: 1,
               border: "none",
               background: "transparent",
+              // buttons inherit the UA default colour otherwise, which is
+              // system blue on iOS
+              color: "#000",
               cursor: "crosshair",
               zIndex: 1000,
             }}

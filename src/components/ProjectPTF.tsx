@@ -1,10 +1,16 @@
-import React from "react";
-import { asset } from "../lib/asset";
+import CollageCanvas, {
+  Block,
+  ImageCells,
+  type CollageImage,
+  textColumn,
+  type BlockSpec,
+} from "./CollageCanvas";
+import { META_TEXT } from "../lib/theme";
 
 type Props = {
   title: string;
   description: string;
-  images: { src: string; caption: string; hero?: boolean; scale?: number }[];
+  images: CollageImage[];
 };
 
 // Disjoint cells spread across a tall canvas with plenty of whitespace, matching
@@ -36,91 +42,39 @@ const TOP_MARGIN = Math.min(...CELLS.map((c) => c.top));
 const MAX_BOTTOM = Math.max(...CELLS.map((c) => c.top + c.height));
 const CANVAS_VH = MAX_BOTTOM + TOP_MARGIN;
 
+// Text column. `top` is in vh to match the image cells; left/width are % of the
+// page width.
+const TITLE: BlockSpec = { top: 0, left: 0, width: 19.5 };
+
 export default function ProjectPTF({ title, description, images }: Props) {
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: `${CANVAS_VH}vh`,
-        boxSizing: "border-box",
-        textTransform: "lowercase",
-      }}
-    >
-      {/* Title + description, top-left of the first viewport */}
-      <div
-        style={{
-          position: "absolute",
-          top: "40px",
-          left: 0,
-          width: "19.5%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 6px 0" }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 10px 0" }}>
-          Manchester, UK
-          <br />
-          Undergraduate Project Year 3
-        </p>
-        <p
-          style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}
-          dangerouslySetInnerHTML={{ __html: description }}
-        />
-      </div>
+    <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
+      {(phone) => (
+        <>
+          {/* Title + description, top-left of the first viewport */}
+          <Block
+            phone={phone}
+            spec={TITLE}
+            style={{ ...textColumn(phone), marginTop: phone ? 0 : "40px" }}
+          >
+            <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 6px 0" }}>
+              {title}
+            </h1>
+            <p style={{ ...META_TEXT, margin: "0 0 10px 0" }}>
+              Manchester, UK
+              <br />
+              Undergraduate Project Year 3
+            </p>
+            <p
+              style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          </Block>
 
-      {/* Images span the full viewport width minus a 40px gutter on each side,
-          matching the text block's 40px left inset. Cell coordinates are
-          relative to this padded area, so left:0 / right:100% sit at the
-          gutters. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          padding: "0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        {images.map((item, i) => {
-          const cell = CELLS[i % CELLS.length];
-          // each image fills its own (uniquely sized) cell; `scale` shrinks/grows
-          // an individual image further.
-          const fill = (item.scale ?? 1) * 100;
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                top: `${cell.top}vh`,
-                left: `${cell.left}%`,
-                width: `${cell.width}%`,
-                height: `${cell.height}vh`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img
-                src={asset(item.src)}
-                alt={item.caption}
-                loading="lazy"
-                decoding="async"
-                style={{
-                  maxWidth: `${fill}%`,
-                  maxHeight: `${fill}%`,
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
-                  display: "block",
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+          {/* Image cells, placed against the page inset by the 40px gutters. */}
+          <ImageCells phone={phone} cells={CELLS} images={images} />
+        </>
+      )}
+    </CollageCanvas>
   );
 }
