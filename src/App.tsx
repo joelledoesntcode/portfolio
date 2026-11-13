@@ -786,10 +786,12 @@ export default function App() {
             zIndex: 20,
             overflowY: "auto",
             overflowX: "hidden",
-            // leave room for the nav bar fixed at the foot of the screen
+            // Keep padding inside the viewport so the final images can scroll
+            // fully above the fixed navigation, with extra breathing room.
+            boxSizing: "border-box",
             paddingBottom: phone
-              ? "calc(68px + env(safe-area-inset-bottom, 0px))"
-              : "72px",
+              ? "calc(92px + env(safe-area-inset-bottom, 0px))"
+              : "96px",
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
