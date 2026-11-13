@@ -1,5 +1,6 @@
 import { useProgress } from "@react-three/drei";
 import { Loader } from "@fremtind/jkl-loader-react";
+import { BG_COLOR } from "../lib/theme";
 
 // Full-screen overlay shown while the 3D scene's textures are loading.
 // Uses the Jøkul (Fremtind) Loader component.
@@ -17,7 +18,7 @@ export default function LoadingScreen() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "white",
+        backgroundColor: BG_COLOR,
       }}
     >
       <Loader variant="large" textDescription="Loading …" />

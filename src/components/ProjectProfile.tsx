@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { asset } from "../lib/asset";
+import { usePhone } from "../lib/usePhone";
+import { META_TEXT } from "../lib/theme";
 
 // The title for this project is rendered by App.tsx (left column).
 const VIDEO_ID = "DjP4-UcvrB8";
@@ -18,6 +20,7 @@ export default function ProjectProfile({ title }: { title: string }) {
   // Facade: show a clean poster + play button until clicked, then load the
   // YouTube player. Keeps the preview free of the YouTube logo/title.
   const [playing, setPlaying] = useState(false);
+  const phone = usePhone();
 
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -53,18 +56,24 @@ export default function ProjectProfile({ title }: { title: string }) {
       style={{
         width: "100%",
         overflowX: "hidden",
-        height: innerHeight ? `${innerHeight * scale}px` : undefined,
+        height: phone || !innerHeight ? undefined : `${innerHeight * scale}px`,
       }}
     >
       <div
         ref={innerRef}
         style={{
-          width: `${DESIGN_WIDTH}px`,
-          marginLeft: `${marginLeft}px`,
+          // On phones the fixed design canvas is abandoned: the page becomes a
+          // plain full-width vertical column (see usePhone / CollageCanvas).
+          width: phone ? "100%" : `${DESIGN_WIDTH}px`,
+          marginLeft: phone ? 0 : `${marginLeft}px`,
           transformOrigin: "top left",
-          transform: `scale(${scale})`,
+          transform: phone ? "none" : `scale(${scale})`,
           boxSizing: "border-box",
-          padding: "40px 40px 80px 40px",
+          padding: phone ? "32px 20px 60px 20px" : "40px 40px 80px 40px",
+          // 12px matches the paragraph rhythm inside each text block, so
+          // consecutive paragraphs read as one column of copy rather than as
+          // separately spaced sections. Images add their own margin on top.
+          gap: phone ? "12px" : undefined,
           textTransform: "lowercase",
           display: "flex",
           flexDirection: "column",
@@ -76,7 +85,7 @@ export default function ProjectProfile({ title }: { title: string }) {
             fontSize: "0.9rem",
             fontWeight: 300,
             margin: "0 0 6px 0",
-            width: "19.5%",
+            width: phone ? "100%" : "19.5%",
             paddingRight: "24px",
             boxSizing: "border-box",
           }}
@@ -87,19 +96,22 @@ export default function ProjectProfile({ title }: { title: string }) {
         {/* project metadata — under the title, before the intro subtext */}
         <div
           style={{
-            width: "19.5%",
+            width: phone ? "100%" : "19.5%",
             paddingRight: "24px",
             boxSizing: "border-box",
-            margin: "0 0 16px 0",
+            // On phones the title, this block and the intro are separate flex
+            // children, so each pair also picks up the column gap. Pull them
+            // back together to the 6px/8px the other project pages use.
+            margin: phone ? "-12px 0 0 0" : "0 0 16px 0",
           }}
         >
-          <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
+          <p style={{ ...META_TEXT, margin: 0 }}>
             medan, indonesia
           </p>
-          <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
+          <p style={{ ...META_TEXT, margin: 0 }}>
             masters project year 1
           </p>
-          <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
+          <p style={{ ...META_TEXT, margin: 0 }}>
             diploma 5, architectural association
           </p>
         </div>
@@ -107,10 +119,10 @@ export default function ProjectProfile({ title }: { title: string }) {
         {/* intro subtext — matches other projects' description column */}
         <div
           style={{
-            width: "19.5%",
+            width: phone ? "100%" : "19.5%",
             paddingRight: "24px",
             boxSizing: "border-box",
-            margin: "0 0 32px 0",
+            margin: phone ? "-4px 0 0 0" : "0 0 32px 0",
           }}
         >
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 12px 0" }}>
@@ -147,27 +159,28 @@ export default function ProjectProfile({ title }: { title: string }) {
             height: "auto",
             margin: "0 auto",
             position: "relative",
-            left: "420px",
-            top: "-250px",
+            left: phone ? "auto" : "420px",
+            top: phone ? "auto" : "-250px",
           }}
         />
 
         {/* silk1/2/3 — small squares next to archive.gif (zero-height wrapper, no shift) */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <div
             style={{
-              position: "absolute",
-              top: "-550px",
-              left: "430px",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-550px",
+              left: phone ? "auto" : "430px",
               display: "flex",
               flexDirection: "row",
+            flexWrap: "wrap",
               alignItems: "flex-start",
-              gap: "28px",
+              gap: phone ? "6px" : "28px",
             }}
           >
-            <img src={asset("/silk1.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "120px", height: "120px", objectFit: "cover", marginTop: "0px" }} />
-            <img src={asset("/silk2.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "120px", height: "120px", objectFit: "cover", marginTop: "45px" }} />
-            <img src={asset("/silk3.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "120px", height: "120px", objectFit: "cover", marginTop: "90px" }} />
+            <img src={asset("/silk1.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "120px", height: phone ? "auto" : "120px", objectFit: "cover", marginTop: phone ? 0 : "0px" }} />
+            <img src={asset("/silk2.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "120px", height: phone ? "auto" : "120px", objectFit: "cover", marginTop: phone ? 0 : "45px" }} />
+            <img src={asset("/silk3.jpg")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "120px", height: phone ? "auto" : "120px", objectFit: "cover", marginTop: phone ? 0 : "90px" }} />
           </div>
         </div>
 
@@ -177,13 +190,13 @@ export default function ProjectProfile({ title }: { title: string }) {
             fontSize: "0.7rem",
             fontWeight: 300,
             textAlign: "justify",
-            width: "19.5%",
+            width: phone ? "100%" : "19.5%",
             paddingRight: "24px",
             boxSizing: "border-box",
             margin: "0 auto 0 0",
             position: "relative",
-            left: "800px",
-            top: "-50px",
+            left: phone ? "auto" : "800px",
+            top: phone ? "auto" : "-50px",
             zIndex: 5,
           }}
         >
@@ -195,13 +208,13 @@ export default function ProjectProfile({ title }: { title: string }) {
         </p>
 
         {/* text above col.gif — zero-height wrapper so it doesn't shift any image */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "180px",
-              left: "50px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "180px",
+              left: phone ? "auto" : "50px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -229,21 +242,21 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "980px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "300px",
-            left: "-200px",
+            top: phone ? "auto" : "300px",
+            left: phone ? "auto" : "-200px",
           }}
         />
 
         {/* text to the right of col.gif — zero-height wrapper so no other image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "250px",
-              left: "1150px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "250px",
+              left: phone ? "auto" : "1150px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -262,17 +275,17 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* extract.jpg below col.gif — zero-height wrapper so no other image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <img
             src={asset("/extract.jpg")}
             alt=""
             loading="lazy"
             decoding="async"
             style={{
-              position: "absolute",
-              top: "380px",
-              left: "800px",
-              width: "740px",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "380px",
+              left: phone ? "auto" : "800px",
+              width: phone ? "100%" : "740px",
               height: "auto",
               display: "block",
             }}
@@ -280,13 +293,13 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* text above 111 — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "450px",
-              left: "50px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "450px",
+              left: phone ? "auto" : "50px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -305,21 +318,22 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* 111/222/333 — row to the left of extract.jpg (zero-height wrapper, no shift) */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <div
             style={{
-              position: "absolute",
-              top: "580px",
-              left: "200px",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "580px",
+              left: phone ? "auto" : "200px",
               display: "flex",
               flexDirection: "row",
+            flexWrap: "wrap",
               alignItems: "flex-start",
-              gap: "16px",
+              gap: phone ? "6px" : "16px",
             }}
           >
-            <img src={asset("/111.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "140px", height: "auto" }} />
-            <img src={asset("/222.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "140px", height: "auto" }} />
-            <img src={asset("/333.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "140px", height: "auto" }} />
+            <img src={asset("/111.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "140px", height: "auto" }} />
+            <img src={asset("/222.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "140px", height: "auto" }} />
+            <img src={asset("/333.gif")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "140px", height: "auto" }} />
           </div>
         </div>
 
@@ -334,10 +348,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "740px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "-914px",
-            left: "-350px",
+            top: phone ? "auto" : "-914px",
+            left: phone ? "auto" : "-350px",
           }}
         />
 
@@ -353,10 +367,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "380px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "-1193px",
-            left: "600px",
+            top: phone ? "auto" : "-1193px",
+            left: phone ? "auto" : "600px",
           }}
         />
 
@@ -368,8 +382,8 @@ export default function ProjectProfile({ title }: { title: string }) {
             maxWidth: "740px",
             paddingTop: "min(56.25%, 416px)",
             margin: "80px auto 0 auto",
-            top: "-250px",
-            left: "-450px",
+            top: phone ? "auto" : "-250px",
+            left: phone ? "auto" : "-450px",
           }}
         >
           {playing ? (
@@ -435,13 +449,13 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* text to the right of the film — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "-600px",
-              left: "790px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-600px",
+              left: phone ? "auto" : "790px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -459,17 +473,17 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* medanpenang.jpg below the film — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <img
             src={asset("/medanpenang.jpg")}
             alt=""
             loading="lazy"
             decoding="async"
             style={{
-              position: "absolute",
-              top: "-400px",
-              left: "850px",
-              width: "720px",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-400px",
+              left: phone ? "auto" : "850px",
+              width: phone ? "100%" : "720px",
               height: "auto",
               display: "block",
             }}
@@ -477,13 +491,13 @@ export default function ProjectProfile({ title }: { title: string }) {
         </div>
 
         {/* text below medanpenang.jpg — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "-480px",
-              left: "1350px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-480px",
+              left: phone ? "auto" : "1350px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -511,10 +525,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "150px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "-600px",
-            top: "-200px",
+            left: phone ? "auto" : "-600px",
+            top: phone ? "auto" : "-200px",
           }}
         />
         <img
@@ -527,10 +541,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "300px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "-400px",
-            top: "-200px",
+            left: phone ? "auto" : "-400px",
+            top: phone ? "auto" : "-200px",
           }}
         />
         <img
@@ -543,21 +557,21 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "380px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "400px",
-            top: "-200px",
+            left: phone ? "auto" : "400px",
+            top: phone ? "auto" : "-200px",
           }}
         />
 
         {/* text next to 777 — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "-1000px",
-              left: "700px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-1000px",
+              left: phone ? "auto" : "700px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -587,21 +601,21 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "540px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "-400px",
-            top: "-750px",
+            left: phone ? "auto" : "-400px",
+            top: phone ? "auto" : "-750px",
           }}
         />
 
         {/* text below penangmedangif — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "-720px",
-              left: "0px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-720px",
+              left: phone ? "auto" : "0px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -629,21 +643,21 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "680px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "-400px",
-            top: "-600px",
+            left: phone ? "auto" : "-400px",
+            top: phone ? "auto" : "-600px",
           }}
         />
 
         {/* text below shoptax — zero-height wrapper so no image shifts */}
-        <div style={{ position: "relative", height: 0 }}>
+        <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
-              position: "absolute",
-              top: "-1050px",
-              left: "800px",
-              width: "19.5%",
+              position: phone ? "static" : "absolute",
+              top: phone ? "auto" : "-1050px",
+              left: phone ? "auto" : "800px",
+              width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
               fontSize: "0.7rem",
@@ -670,10 +684,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "680px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            left: "400px",
-            top: "-1100px",
+            left: phone ? "auto" : "400px",
+            top: phone ? "auto" : "-1100px",
           }}
         />
 
@@ -682,18 +696,22 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "flex",
             flexDirection: "row",
+            flexWrap: "wrap",
             alignItems: "flex-start",
             justifyContent: "center",
-            gap: "48px",
-            margin: "40px auto 0 auto",
+            gap: phone ? "6px" : "48px",
+            // `auto` side margins make a flex item shrink-to-fit rather than
+            // stretch, which would collapse the percentage-width children
+            margin: phone ? "0" : "40px auto 0 auto",
+            width: phone ? "100%" : undefined,
             position: "relative",
-            top: "-1050px",
-            left: "500px",
+            top: phone ? "auto" : "-1050px",
+            left: phone ? "auto" : "500px",
           }}
         >
-          <img src={asset("/mod1.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "165px", height: "auto", marginTop: "0px" }} />
-          <img src={asset("/mod3.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "165px", height: "auto", marginTop: "60px" }} />
-          <img src={asset("/mod2.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: "165px", height: "auto", marginTop: "120px" }} />
+          <img src={asset("/mod1.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "165px", height: "auto", marginTop: phone ? 0 : "0px" }} />
+          <img src={asset("/mod3.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "165px", height: "auto", marginTop: phone ? 0 : "60px" }} />
+          <img src={asset("/mod2.png")} alt="" loading="lazy" decoding="async" style={{ display: "block", width: phone ? "32%" : "165px", height: "auto", marginTop: phone ? 0 : "120px" }} />
         </div>
 
         {/* explode.jpg — under everything (normal flow) */}
@@ -707,10 +725,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "940px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "-1200px",
-            left: "-300px",
+            top: phone ? "auto" : "-1200px",
+            left: phone ? "auto" : "-300px",
           }}
         />
 
@@ -725,10 +743,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "840px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "-1200px",
-            left: "200px",
+            top: phone ? "auto" : "-1200px",
+            left: phone ? "auto" : "200px",
           }}
         />
 
@@ -743,7 +761,7 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "700px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
           }}
         />
 
@@ -758,10 +776,10 @@ export default function ProjectProfile({ title }: { title: string }) {
             width: "100%",
             maxWidth: "700px",
             height: "auto",
-            margin: "40px auto 0 auto",
+            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: "-1400px",
-            left: "-200px",
+            top: phone ? "auto" : "-1400px",
+            left: phone ? "auto" : "-200px",
           }}
         />
       </div>
