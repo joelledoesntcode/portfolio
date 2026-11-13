@@ -42,8 +42,8 @@ type Project = {
     phoneOffsetY?: number;
     /** push the pair to opposite edges of its row on phones */
     phoneRowSpread?: boolean;
-    /** extra row height on phones, as a % of its width */
-    phoneRowExtraHeight?: number;
+    /** minimum row height on phones, in vw (opens up the stagger) */
+    phoneRowMinHeight?: number;
     /** on phones, order as if the cell sat at this vh (see CollageCanvas) */
     phoneOrder?: number;
   }[];
@@ -351,7 +351,7 @@ function Cube({
         images: [
           { src: "/antecollage.png", caption: "", scale: 1.8 },
           { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85, pair: "roman", phoneWidth: 40, phoneAlign: "top" as const },
-          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42, pair: "roman", phoneWidth: 36, phoneAlign: "bottom" as const, phoneRowSpread: true, phoneRowExtraHeight: 10 },
+          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42, pair: "roman", phoneWidth: 36, phoneAlign: "bottom" as const, phoneRowSpread: true, phoneRowMinHeight: 76 },
           { src: "/mainante.png", caption: "Mhehehe", scale: 1.05 },
           { src: "/1.PNG", caption: "", pair: "sketches-a" },
           { src: "/2.PNG", caption: "", pair: "sketches-a" },

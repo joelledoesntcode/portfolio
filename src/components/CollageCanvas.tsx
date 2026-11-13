@@ -153,10 +153,12 @@ export type CollageImage = {
    */
   phoneRowSpread?: boolean;
   /**
-   * Set on either image of a `pair` to add this much height to the row on
-   * phones, as a percentage of its width (so it scales with the screen).
+   * Set on either image of a `pair` to give the row a minimum height on
+   * phones, in vw (so it scales with the screen). The row is otherwise only
+   * as tall as its taller image, which leaves a bottom-aligned partner no
+   * room to drop — this is what opens up the vertical stagger.
    */
-  phoneRowExtraHeight?: number;
+  phoneRowMinHeight?: number;
 };
 
 /**
@@ -278,8 +280,8 @@ export function ImageCells({
       const anchor = cellFor(i).top <= cellFor(partner).top ? i : partner;
       // row options may be set on either half of the pair
       const spread = item.phoneRowSpread ?? images[partner].phoneRowSpread;
-      const extraHeight =
-        item.phoneRowExtraHeight ?? images[partner].phoneRowExtraHeight;
+      const minHeight =
+        item.phoneRowMinHeight ?? images[partner].phoneRowMinHeight;
       nodes.push(
         <Block
           key={i}
@@ -290,7 +292,7 @@ export function ImageCells({
             alignItems: "flex-start",
             justifyContent: spread ? "space-between" : "flex-start",
             gap: spread ? 0 : "12px",
-            paddingBottom: extraHeight ? `${extraHeight}%` : undefined,
+            minHeight: minHeight ? `${minHeight}vw` : undefined,
           }}
         >
           {[images[i], images[partner]].map((im) => (
