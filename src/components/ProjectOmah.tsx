@@ -1,17 +1,18 @@
-import React from "react";
-import { asset } from "../lib/asset";
+import CollageCanvas, {
+  Block,
+  ImageCells,
+  type CollageImage,
+  textColumn,
+  vw,
+  type BlockSpec,
+} from "./CollageCanvas";
+import { META_TEXT } from "../lib/theme";
 
 type Props = {
   title: string;
   description: string;
-  images: { src: string; caption: string; hero?: boolean; scale?: number }[];
+  images: CollageImage[];
 };
-
-// Disjoint cells spread across a tall canvas with plenty of whitespace, matching
-// the Fish Market / Pilgrim layout. top/height are in vh; left/width are % of
-// page width. Each image fills its own cell, every cell is a DIFFERENT size on
-// purpose, and the cells are staggered so no two line up on any edge. Cells are
-// ordered to match the images array; the top-left is kept clear for the title.
 // The canvas height is computed below so the bottom margin (below the lowest
 // image) equals the top margin (above the topmost image).
 const CELLS: { top: number; left: number; width: number; height: number }[] = [
@@ -30,225 +31,141 @@ const TOP_MARGIN = Math.min(...CELLS.map((c) => c.top));
 const MAX_BOTTOM = Math.max(...CELLS.map((c) => c.top + c.height));
 const CANVAS_VH = MAX_BOTTOM + TOP_MARGIN;
 
+// Text columns. `top` is in vh to match the image cells; left/width are % of the
+// page width. Each is anchored to the image it annotates (noted alongside).
+const TITLE: BlockSpec = { top: 0, left: 0, width: 19.5 };
+const INTRO: BlockSpec = { top: 40, left: 15, width: 19.5 };
+const QUOTE_INCOME: BlockSpec = { top: 88, left: 41, width: 22 }; // above omah_weave1
+const QUOTE_SCHOOL: BlockSpec = { top: 120, left: 54, width: 22, phoneOrder: 94 }; // below omah_weave1
+const QUOTE_FARMING: BlockSpec = { top: 133, left: 79, width: 22, phoneOrder: 95 }; // under omah_weave2
+const CAPTION_BALE: BlockSpec = { top: 130, left: 6, width: 30 }; // under omah_ver1
+const CAPTION_GRIDSHELL: BlockSpec = { top: 164, left: 15, width: 30, phoneOrder: 113 }; // under omah_ver2
+const CAPTION_RESEARCH: BlockSpec = { top: 166, left: 15, width: 30, phoneOrder: 114 }; // below omah_ver2
+
+// The three gridshell captions. On desktop they sit at three hand-placed spots
+// around omah_ver1/2; on phones they read as one run of text, in this order.
+const BALE_A = "The Bale Tani is a traditional house";
+const BALE_B = "with a woven bamboo gridshell-like structure.";
+const RESEARCH_A = "Ethnographic research, cultural studies,";
+const RESEARCH_B = "and reflections—from during my time in the village";
+const GRIDSHELL = "Ideas inspired by vernacular gridshell.";
+
+const line: React.CSSProperties = { fontSize: "0.7rem", fontWeight: 300, margin: 0 };
+const italic: React.CSSProperties = { ...line, fontStyle: "italic", margin: "0 0 4px 0" };
+
+/** The quote/caption columns sit on a narrower inset than the title column. */
+const captionColumn = (phone: boolean): React.CSSProperties => ({
+  padding: phone ? 0 : "0 24px 0 12px",
+  boxSizing: "border-box",
+});
+
 export default function ProjectOmah({ title, description, images }: Props) {
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: `${CANVAS_VH}vh`,
-        boxSizing: "border-box",
-        textTransform: "lowercase",
-      }}
-    >
-      {/* Title + description, top-left of the first viewport */}
-      <div
-        style={{
-          position: "absolute",
-          top: "40px",
-          left: 0,
-          width: "19.5%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 8px 0" }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 4px 0" }}>
-          “House of Dreams”: A Beacon of Cultural Education
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 2px 0" }}>
-          Rembitan Village, Lombok, Indonesia
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 24px 0" }}>
-          Self-initiated project for Titian Foundation (2024)
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, fontStyle: "italic", margin: "0 0 4px 0" }}>
-          ‘The Actions Of Others Affect The Way I Act, And My Actions Affect The Decisions Of Others’
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 16px 0" }}>
-          - Salen, K., Walz, s. P., &amp; Deterding, s. (Eds.). (2014). The Gameful World: Approaches, Issues, Applications. MIT press.
-        </p>
-      </div>
+    <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
+      {(phone) => (
+        <>
+          {/* Title + description, top-left of the first viewport */}
+          <Block
+            phone={phone}
+            spec={TITLE}
+            style={{ ...textColumn(phone), marginTop: phone ? 0 : "40px" }}
+          >
+            <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 8px 0" }}>
+              {title}
+            </h1>
+            <p style={{ ...line, ...META_TEXT, margin: "0 0 4px 0" }}>
+              “House of Dreams”: A Beacon of Cultural Education
+            </p>
+            <p style={{ ...line, ...META_TEXT, margin: "0 0 2px 0" }}>
+              Rembitan Village, Lombok, Indonesia
+            </p>
+            <p style={{ ...line, ...META_TEXT, margin: "0 0 24px 0" }}>
+              Self-initiated project for Titian Foundation (2024)
+            </p>
+            <p style={italic}>
+              ‘The Actions Of Others Affect The Way I Act, And My Actions Affect The Decisions Of Others’
+            </p>
+            <p style={{ ...line, margin: "0 0 16px 0" }}>
+              - Salen, K., Walz, s. P., &amp; Deterding, s. (Eds.). (2014). The Gameful World: Approaches, Issues, Applications. MIT press.
+            </p>
+          </Block>
 
-      {/* "In Rembitan..." split out of the title block, moved 10 right and 5
-          down from its original column position. */}
-      <div
-        style={{
-          position: "absolute",
-          top: "40vh",
-          left: "15%",
-          width: "19.5%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-          In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. {description}
-        </p>
-      </div>
+          {/* "In Rembitan..." split out of the title block, moved 10 right and 5
+              down from its original column position. */}
+          <Block phone={phone} spec={INTRO} style={textColumn(phone)}>
+            <p style={{ ...line, textAlign: "justify" }}>
+              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. {description}
+            </p>
+          </Block>
 
-      {/* Quote above omah_weave1 (cell top 96vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "88vh",
-          left: "41%",
-          width: "22%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, fontStyle: "italic", margin: "0 0 4px 0" }}>
-          ‘‘I work for all our income and my husband takes the money and gambles’’
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
-          - Working mother of 2
-        </p>
-      </div>
+          {/* Quote above omah_weave1 (cell top 96vh). */}
+          <Block phone={phone} spec={QUOTE_INCOME} style={captionColumn(phone)}>
+            <p style={italic}>
+              ‘‘I work for all our income and my husband takes the money and gambles’’
+            </p>
+            <p style={line}>- Working mother of 2</p>
+          </Block>
 
-      {/* Quote below omah_weave1 (cell bottom 118vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "120vh",
-          left: "54%",
-          width: "22%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, fontStyle: "italic", margin: "0 0 4px 0" }}>
-          ‘‘I stopped school to sell stuff and ask tourists for money, so my parents could eat’’
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
-          - 8 year old girl
-        </p>
-      </div>
+          {/* Quote below omah_weave1 (cell bottom 118vh). */}
+          <Block phone={phone} spec={QUOTE_SCHOOL} style={captionColumn(phone)}>
+            <p style={italic}>
+              ‘‘I stopped school to sell stuff and ask tourists for money, so my parents could eat’’
+            </p>
+            <p style={line}>- 8 year old girl</p>
+          </Block>
 
-      {/* Quote under omah_weave2 (cell bottom 131vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "133vh",
-          left: "79%",
-          width: "22%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, fontStyle: "italic", margin: "0 0 4px 0" }}>
-          ‘‘Farming isn’t sustainable anymore, I rely 100% on my wife who weaves cloth for tourists’’
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
-          - A father / head of family
-        </p>
-      </div>
+          {/* Quote under omah_weave2 (cell bottom 131vh). */}
+          <Block phone={phone} spec={QUOTE_FARMING} style={captionColumn(phone)}>
+            <p style={italic}>
+              ‘‘Farming isn’t sustainable anymore, I rely 100% on my wife who weaves cloth for tourists’’
+            </p>
+            <p style={line}>- A father / head of family</p>
+          </Block>
 
-      {/* Caption under omah_ver1 (cell bottom 128vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "130vh",
-          left: "6%",
-          width: "30%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
-          The Bale Tani is a traditional house
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0, marginLeft: "5vw" }}>
-          with a woven bamboo gridshell-like structure.
-        </p>
-      </div>
-
-      {/* Caption under omah_ver2 (cell bottom 164vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "164vh",
-          left: "15%",
-          width: "30%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-          Ideas inspired by vernacular gridshell.
-        </p>
-      </div>
-
-      {/* Caption below omah_ver2 (cell top 144vh + 20vh height = 164vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "166vh",
-          left: "15%",
-          width: "30%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0, marginLeft: "5vw" }}>
-          Ethnographic research, cultural studies,
-        </p>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0, marginLeft: "10vw" }}>
-          and reflections—from during my time in the village
-        </p>
-      </div>
-
-      {/* Images span the full viewport width minus a 40px gutter on each side,
-          matching the text block's 40px left inset. Cell coordinates are
-          relative to this padded area, so left:0 / right:100% sit at the
-          gutters. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          padding: "0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        {images.map((item, i) => {
-          const cell = CELLS[i % CELLS.length];
-          // each image fills its own (uniquely sized) cell; `scale` shrinks/grows
-          // an individual image further.
-          const fill = (item.scale ?? 1) * 100;
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                top: `${cell.top}vh`,
-                left: `${cell.left}%`,
-                width: `${cell.width}%`,
-                height: `${cell.height}vh`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+          {phone ? (
+            // one run of text under the omah_ver pair, in reading order
+            <Block
+              phone={phone}
+              spec={{ ...CAPTION_BALE, phoneOrder: 113 }}
+              style={captionColumn(phone)}
             >
-              <img
-                src={asset(item.src)}
-                alt={item.caption}
-                loading="lazy"
-                decoding="async"
-                style={{
-                  maxWidth: `${fill}%`,
-                  maxHeight: `${fill}%`,
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
-                  display: "block",
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+              <p style={{ ...line, textAlign: "justify" }}>
+                {`${BALE_A} ${BALE_B} ${RESEARCH_A} ${RESEARCH_B}. ${GRIDSHELL}`}
+              </p>
+            </Block>
+          ) : (
+            <>
+              {/* Caption under omah_ver1 (cell bottom 128vh). */}
+              <Block phone={phone} spec={CAPTION_BALE} style={captionColumn(phone)}>
+                <p style={line}>{BALE_A}</p>
+                <p style={{ ...line, marginLeft: vw(5, phone) }}>{BALE_B}</p>
+              </Block>
+
+              {/* Caption under omah_ver2 (cell bottom 164vh). */}
+              <Block
+                phone={phone}
+                spec={CAPTION_GRIDSHELL}
+                style={captionColumn(phone)}
+              >
+                <p style={{ ...line, textAlign: "justify" }}>{GRIDSHELL}</p>
+              </Block>
+
+              {/* Caption below omah_ver2 (cell top 144vh + 20vh height = 164vh). */}
+              <Block
+                phone={phone}
+                spec={CAPTION_RESEARCH}
+                style={captionColumn(phone)}
+              >
+                <p style={{ ...line, marginLeft: vw(5, phone) }}>{RESEARCH_A}</p>
+                <p style={{ ...line, marginLeft: vw(10, phone) }}>{RESEARCH_B}</p>
+              </Block>
+            </>
+          )}
+
+          {/* Image cells, placed against the page inset by the 40px gutters. */}
+          <ImageCells phone={phone} cells={CELLS} images={images} />
+        </>
+      )}
+    </CollageCanvas>
   );
 }

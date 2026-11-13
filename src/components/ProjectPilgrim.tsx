@@ -1,10 +1,16 @@
-import React from "react";
-import { asset } from "../lib/asset";
+import CollageCanvas, {
+  Block,
+  ImageCells,
+  type CollageImage,
+  textColumn,
+  type BlockSpec,
+} from "./CollageCanvas";
+import { META_TEXT } from "../lib/theme";
 
 type Props = {
   title: string;
   description: string;
-  images: { src: string; caption: string; hero?: boolean; scale?: number }[];
+  images: CollageImage[];
 };
 
 // Disjoint cells spread across a tall canvas with plenty of whitespace, matching
@@ -34,6 +40,24 @@ const BOTTOM_MARGIN = 11.22;
 const MAX_BOTTOM = Math.max(...CELLS.map((c) => c.top + c.height));
 const CANVAS_VH = MAX_BOTTOM + BOTTOM_MARGIN;
 
+// Text columns. `top` is in vh to match the image cells; left/width are % of the
+// page width. Each is anchored to the image it annotates (noted alongside).
+const TITLE: BlockSpec = { top: 0, left: 0, width: 19.5 };
+const EARTHWORK: BlockSpec = { top: 78, left: 40, width: 19.5 };
+const CAPTION_TOWER: BlockSpec = { top: 154, left: 10, width: 19.5 }; // under mainante.png
+const CAPTION_PULL: BlockSpec = { top: 107, left: 48, width: 20 }; // beside 1.PNG
+const CAPTION_RELEASE: BlockSpec = { top: 109, left: 84, width: 20, height: 24 }; // beside 2.PNG
+const CAPTION_LEAVE: BlockSpec = { top: 138, left: 70, width: 16 }; // right of 3.PNG
+const CAPTION_FIND: BlockSpec = { top: 164, left: 90, width: 20 }; // below 4.PNG
+
+const line: React.CSSProperties = { fontSize: "0.7rem", fontWeight: 300, margin: 0 };
+
+/** The short captions sit on a narrower inset than the title column. */
+const captionColumn = (phone: boolean): React.CSSProperties => ({
+  padding: phone ? 0 : "0 24px 0 12px",
+  boxSizing: "border-box",
+});
+
 export default function ProjectPilgrim({ title, description, images }: Props) {
   // Split the description so everything from "The Earthwork theme" onward renders
   // as its own block, pushed down from the intro paragraphs above it.
@@ -43,201 +67,88 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
   const earthworkText = markerIdx >= 0 ? description.slice(markerIdx) : "";
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: `${CANVAS_VH}vh`,
-        boxSizing: "border-box",
-        textTransform: "lowercase",
-      }}
-    >
-      {/* Title + description, top-left of the first viewport */}
-      <div
-        style={{
-          position: "absolute",
-          top: "40px",
-          left: 0,
-          width: "19.5%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 6px 0" }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "0 0 10px 0" }}>
-          Ruins, Revival, Legacy
-          <br />
-          London, UK
-          <br />
-          Antepavilion competition entry (2024)
-        </p>
-        <p
-          style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}
-          dangerouslySetInnerHTML={{ __html: introText }}
-        />
-      </div>
+    <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
+      {(phone) => (
+        <>
+          {/* Title + description, top-left of the first viewport */}
+          <Block
+            phone={phone}
+            spec={TITLE}
+            style={{ ...textColumn(phone), marginTop: phone ? 0 : "40px" }}
+          >
+            <h1 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 6px 0" }}>
+              {title}
+            </h1>
+            <p style={{ ...line, ...META_TEXT, margin: "0 0 10px 0" }}>
+              London, UK
+              <br />
+              Antepavilion competition entry (2024)
+            </p>
+            <p
+              style={{ ...line, textAlign: "justify" }}
+              dangerouslySetInnerHTML={{ __html: introText }}
+            />
+          </Block>
 
-      {/* "The Earthwork theme..." onward — split out of the intro column so it can
-          be positioned independently. */}
-      {earthworkText && (
-        <div
-          style={{
-            position: "absolute",
-            top: "78vh",
-            left: "40%",
-            width: "19.5%",
-            padding: "0 24px 0 40px",
-            boxSizing: "border-box",
-          }}
-        >
-          <p
-            style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}
-            dangerouslySetInnerHTML={{ __html: earthworkText }}
-          />
-        </div>
-      )}
-
-      {/* Caption text under mainante.png — its cell bottoms out at top 92vh +
-          50vh = 142vh. */}
-      <div
-        style={{
-          position: "absolute",
-          top: "154vh",
-          left: "10%",
-          width: "19.5%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
-          Tower: pays homage to historic Roman trusses.
-          <br />
-          Ballasts: embodies unearthing, honours cycles of creation and demolition.
-        </p>
-      </div>
-
-      {/* Caption text beside 1.PNG — right-aligned so it sits against the
-          image's left edge, top aligned with 1.PNG's cell top (116vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "107vh",
-          left: "48%",
-          width: "20%",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "right", margin: 0 }}>
-          Pull for refuge...
-        </p>
-      </div>
-
-      {/* Caption text beside 2.PNG — left-aligned, bottom aligned with 2.PNG's
-          cell bottom (top 121vh + 24vh height = 145vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "109vh",
-          left: "84%",
-          width: "20%",
-          height: "24vh",
-          padding: "0 24px 0 40px",
-          boxSizing: "border-box",
-          display: "flex",
-          alignItems: "flex-end",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "left", margin: 0 }}>
-          ...Release for repose, shape your own spaces
-        </p>
-      </div>
-
-      {/* Caption text on the right side of 3.PNG — left-aligned, starting at
-          3.PNG's right edge (left 62% + 22% width = 84%), top at 142vh. */}
-      <div
-        style={{
-          position: "absolute",
-          top: "138vh",
-          left: "70%",
-          width: "16%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "left", margin: 0 }}>
-          Leave things behind...
-        </p>
-      </div>
-
-      {/* Caption text below 4.PNG — aligned under its left edge (75%), just
-          below its cell bottom (142vh + 24vh = 166vh). */}
-      <div
-        style={{
-          position: "absolute",
-          top: "164vh",
-          left: "90%",
-          width: "20%",
-          padding: "0 24px 0 12px",
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "left", margin: 0 }}>
-          ...For the next pilgrim to find
-        </p>
-      </div>
-
-      {/* Images span the full viewport width minus a 40px gutter on each side,
-          matching the text block's 40px left inset. Cell coordinates are
-          relative to this padded area, so left:0 / right:100% sit at the
-          gutters. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          padding: "0 40px",
-          boxSizing: "border-box",
-        }}
-      >
-        {images.map((item, i) => {
-          const cell = CELLS[i % CELLS.length];
-          // each image fills its own (uniquely sized) cell; `scale` shrinks/grows
-          // an individual image further.
-          const fill = (item.scale ?? 1) * 100;
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                top: `${cell.top}vh`,
-                left: `${cell.left}%`,
-                width: `${cell.width}%`,
-                height: `${cell.height}vh`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img
-                src={asset(item.src)}
-                alt={item.caption}
-                loading="lazy"
-                decoding="async"
-                style={{
-                  maxWidth: `${fill}%`,
-                  maxHeight: `${fill}%`,
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
-                  display: "block",
-                }}
+          {/* "The Earthwork theme..." onward — split out of the intro column so it
+              can be positioned independently. */}
+          {earthworkText && (
+            <Block phone={phone} spec={EARTHWORK} style={textColumn(phone)}>
+              <p
+                style={{ ...line, textAlign: "justify" }}
+                dangerouslySetInnerHTML={{ __html: earthworkText }}
               />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            </Block>
+          )}
+
+          {/* Caption text under mainante.png — its cell bottoms out at top 92vh +
+              50vh = 142vh. */}
+          <Block phone={phone} spec={CAPTION_TOWER} style={textColumn(phone)}>
+            <p style={line}>
+              Tower: pays homage to historic Roman trusses.
+              <br />
+              Ballasts: embodies unearthing, honours cycles of creation and demolition.
+            </p>
+          </Block>
+
+          {/* Caption text beside 1.PNG — right-aligned so it sits against the
+              image's left edge, top aligned with 1.PNG's cell top (116vh). */}
+          <Block phone={phone} spec={CAPTION_PULL} style={textColumn(phone)}>
+            <p style={{ ...line, textAlign: phone ? "left" : "right" }}>
+              Pull for refuge...
+            </p>
+          </Block>
+
+          {/* Caption text beside 2.PNG — left-aligned, bottom aligned with 2.PNG's
+              cell bottom (top 121vh + 24vh height = 145vh). */}
+          <Block
+            phone={phone}
+            spec={CAPTION_RELEASE}
+            style={
+              phone
+                ? textColumn(phone)
+                : { ...textColumn(phone), display: "flex", alignItems: "flex-end" }
+            }
+          >
+            <p style={line}>...Release for repose, shape your own spaces</p>
+          </Block>
+
+          {/* Caption text on the right side of 3.PNG — left-aligned, starting at
+              3.PNG's right edge (left 62% + 22% width = 84%), top at 142vh. */}
+          <Block phone={phone} spec={CAPTION_LEAVE} style={captionColumn(phone)}>
+            <p style={line}>Leave things behind...</p>
+          </Block>
+
+          {/* Caption text below 4.PNG — aligned under its left edge (75%), just
+              below its cell bottom (142vh + 24vh = 166vh). */}
+          <Block phone={phone} spec={CAPTION_FIND} style={captionColumn(phone)}>
+            <p style={line}>...For the next pilgrim to find</p>
+          </Block>
+
+          {/* Image cells, placed against the page inset by the 40px gutters. */}
+          <ImageCells phone={phone} cells={CELLS} images={images} />
+        </>
+      )}
+    </CollageCanvas>
   );
 }
