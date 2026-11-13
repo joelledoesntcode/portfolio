@@ -350,8 +350,8 @@ function Cube({
           "We have an innate desire to shape the earth for our own, echoing our ancestral pilgrims’ relentless pursuit of innovation. Now, we are simply contemporary travellers, finding spaces we can control in a city so unforgiving to ownership of our environment. <br/><br/>My proposal pays tribute to the drive to transform the earth, through an adaptable tower that invites users to shape their environment - an exploration of the human condition. <br/><br/>The Earthwork theme invited me to engage with the site’s layered history—Roman tracks and ancient brick culverts. <br/><br/>Inspired by Roman engineers, the “Fathers of Trusses,” and Canterbury builders who raised cathedrals, I reflected on humanity’s timeless pursuit of progress and creation.",
         images: [
           { src: "/antecollage.png", caption: "", scale: 1.8 },
-          { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85, pair: "roman", phoneWidth: 40, phoneAlign: "top" as const },
-          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42, pair: "roman", phoneWidth: 36, phoneAlign: "bottom" as const, phoneRowSpread: true, phoneRowMinHeight: 76 },
+          { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85, pair: "roman", phoneWidth: 47, phoneAlign: "top" as const, phoneOrder: 28 },
+          { src: "/culv2.jpg", caption: "Roman culvert", scale: 0.42, pair: "roman", phoneWidth: 47, phoneAlign: "bottom" as const, phoneRowSpread: true, phoneRowMinHeight: 76 },
           { src: "/mainante.png", caption: "Mhehehe", scale: 1.05 },
           { src: "/1.PNG", caption: "", pair: "sketches-a" },
           { src: "/2.PNG", caption: "", pair: "sketches-a" },
@@ -572,6 +572,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
+  // The misc page's content is short, so its "next project" link is pushed to
+  // the foot of the overlay rather than left floating under the thumbnails.
+  const isMisc = selectedProject?.title === "miscellaneous";
+
   const popupSpring = useWebSpring({
     opacity: selectedProject ? 1 : 0,
     transform: selectedProject ? "translateY(0%)" : "translateY(5%)",
@@ -596,9 +600,9 @@ export default function App() {
         }
       `}</style>
 
-      {/* Header. On phones the logo grows, the name and the portfolio label are
-          pushed to opposite edges, and contact/cv drop to a bar at the bottom of
-          the screen. */}
+      {/* Header. On phones the logo grows, the name and the portfolio label sit
+          on one line pushed to opposite edges, and contact/cv drop to a bar at
+          the bottom of the screen. */}
       <h1
         style={{
           position: "absolute",
@@ -606,7 +610,7 @@ export default function App() {
           left: "20px",
           right: "20px",
           margin: 0,
-          fontSize: "1.05rem",
+          fontSize: phone ? "0.95rem" : "1.05rem",
           fontWeight: 300,
           color: "#333",
           zIndex: 10,
@@ -624,29 +628,25 @@ export default function App() {
             style={{
               // Sized in `em` so it always tracks the header text height —
               // keep it em-based whenever the opening-page text/font changes.
-              // On phones it is scaled to the height of the stacked two-line
-              // name block, and centred against it.
-              height: phone ? "2.8em" : "1em",
+              // px on phones so the logo size is independent of the type size
+              // (em elsewhere, so it tracks the header text height)
+              height: phone ? "58px" : "1em",
               width: "auto",
               verticalAlign: "middle",
               marginRight: phone ? 0 : "8px",
               flexShrink: 0,
             }}
           />
-          {phone ? (
-            // stacked: the portfolio label sits under the name
-            <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
-              <span style={{ color: "#000", fontWeight: 600 }}>joelle warsono</span>
-              <span>architectural portfolio</span>
-            </span>
-          ) : (
-            <>
-              <span style={{ color: "#000", fontWeight: 600 }}>joelle warsono</span>
-              &nbsp;architectural portfolio
-            </>
-          )}
+          <span style={{ color: "#000", fontWeight: 600, whiteSpace: "nowrap" }}>
+            joelle warsono
+          </span>
+          {!phone && <>&nbsp;architectural portfolio</>}
         </span>
-        {!phone && (
+        {phone ? (
+          // one line: the label is pushed to the opposite edge by the h1's
+          // space-between
+          <span style={{ whiteSpace: "nowrap" }}>architectural portfolio</span>
+        ) : (
           <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <span
               onClick={() => setShowContact(true)}
@@ -751,6 +751,9 @@ export default function App() {
             zIndex: 20,
             overflowY: "auto",
             overflowX: "hidden",
+            ...(isMisc
+              ? { display: "flex", flexDirection: "column" as const }
+              : {}),
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
@@ -788,7 +791,9 @@ export default function App() {
           ) : selectedProject.title === "Omah Mimpi" ? (
             <ProjectOmah title={selectedProject.title} description={selectedProject.description} images={selectedProject.images} />
           ) : selectedProject.title === "miscellaneous" ? (
-            <ProjectCover images={selectedProject.images} />
+            <div style={{ flexShrink: 0 }}>
+              <ProjectCover images={selectedProject.images} />
+            </div>
           ) : null}
 
           {/* Close button */}
@@ -808,6 +813,9 @@ export default function App() {
               lineHeight: 1,
               border: "none",
               background: "transparent",
+              // buttons inherit the UA default colour otherwise, which is
+              // system blue on iOS
+              color: "#000",
               cursor: "crosshair",
               zIndex: 1000,
             }}
@@ -819,7 +827,12 @@ export default function App() {
           <div
             style={{
               textAlign: "right",
-              padding: "0 30px 24px 30px",
+              // on the misc page this pushes the link to the foot of the overlay
+              marginTop: isMisc ? "auto" : undefined,
+              // on phones, clear the home indicator / browser chrome
+              padding: phone
+                ? "0 20px calc(32px + env(safe-area-inset-bottom, 0px)) 20px"
+                : "0 30px 24px 30px",
               boxSizing: "border-box",
             }}
           >
@@ -879,6 +892,9 @@ export default function App() {
               lineHeight: 1,
               border: "none",
               background: "transparent",
+              // buttons inherit the UA default colour otherwise, which is
+              // system blue on iOS
+              color: "#000",
               cursor: "crosshair",
               zIndex: 1000,
             }}
@@ -937,6 +953,9 @@ export default function App() {
               lineHeight: 1,
               border: "none",
               background: "transparent",
+              // buttons inherit the UA default colour otherwise, which is
+              // system blue on iOS
+              color: "#000",
               cursor: "crosshair",
               zIndex: 1000,
             }}

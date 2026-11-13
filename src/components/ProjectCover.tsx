@@ -97,18 +97,30 @@ export default function ProjectCover(_props: Props) {
         style={{
           width: "100%",
           boxSizing: "border-box",
-          padding: phone ? "0 20px 10vh" : "0 6vw 12vh",
+          // top padding clears the fixed back button below
+          padding: phone ? "52px 20px 10vh" : "52px 6vw 12vh",
         }}
       >
         <button
           onClick={() => setOpenId(null)}
           style={{
+            // pinned opposite the overlay's ✕, on the same line and the same
+            // page margin, rather than sitting in the content flow
+            position: "fixed",
+            top: "20px",
+            left: phone ? "20px" : "30px",
+            padding: 0,
             border: "none",
             background: "transparent",
+            color: "#333",
             cursor: "crosshair",
+            textDecoration: "underline",
             fontSize: "0.85rem",
+            // match the ✕'s line box so the two sit on the same optical line,
+            // not just the same box top (their glyphs are different sizes)
+            lineHeight: "1.2rem",
             fontWeight: 300,
-            padding: "1vh 0 3vh",
+            zIndex: 1000,
           }}
         >
           ← back
@@ -200,6 +212,7 @@ export default function ProjectCover(_props: Props) {
                 border: "none",
                 padding: 0,
                 background: "transparent",
+                color: "#333",
                 cursor: "crosshair",
               }}
             >

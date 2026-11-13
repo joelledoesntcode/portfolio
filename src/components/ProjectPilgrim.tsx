@@ -50,6 +50,17 @@ const CAPTION_RELEASE: BlockSpec = { top: 109, left: 84, width: 20, height: 24 }
 const CAPTION_LEAVE: BlockSpec = { top: 138, left: 70, width: 16 }; // right of 3.PNG
 const CAPTION_FIND: BlockSpec = { top: 164, left: 90, width: 20 }; // below 4.PNG
 
+/** Splits the intro at `idx`, trimming the <br/>s that joined the two halves. */
+function phoneSplit(text: string, idx: number) {
+  if (idx < 0) return { lead: text, rest: "" };
+  return {
+    lead: text.slice(0, idx).replace(/(<br\s*\/?>\s*)+$/i, ""),
+    rest: text.slice(idx),
+  };
+}
+
+const PROPOSAL: BlockSpec = { top: 0, left: 0, width: 19.5, phoneOrder: 27 };
+
 const line: React.CSSProperties = { fontSize: "0.7rem", fontWeight: 300, margin: 0 };
 
 /** The short captions sit on a narrower inset than the title column. */
@@ -65,6 +76,13 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
   const markerIdx = description.indexOf(EARTHWORK_MARKER);
   const introText = markerIdx >= 0 ? description.slice(0, markerIdx) : description;
   const earthworkText = markerIdx >= 0 ? description.slice(markerIdx) : "";
+
+  // On phones the proposal paragraph reads better under antecollage.png than
+  // stacked with the title, so it is split out and re-ordered just after that
+  // image's cell (top 26vh). Desktop keeps the intro column as one piece.
+  const PROPOSAL_MARKER = "My proposal pays tribute";
+  const proposalIdx = introText.indexOf(PROPOSAL_MARKER);
+  const splitIntro = phoneSplit(introText, proposalIdx);
 
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
@@ -86,9 +104,22 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
             </p>
             <p
               style={{ ...line, textAlign: "justify" }}
-              dangerouslySetInnerHTML={{ __html: introText }}
+              dangerouslySetInnerHTML={{
+                __html: phone ? splitIntro.lead : introText,
+              }}
             />
           </Block>
+
+          {/* "My proposal pays tribute..." — on phones it sits under
+              antecollage.png instead of in the title column. */}
+          {phone && splitIntro.rest && (
+            <Block phone={phone} spec={PROPOSAL} style={textColumn(phone)}>
+              <p
+                style={{ ...line, textAlign: "justify" }}
+                dangerouslySetInnerHTML={{ __html: splitIntro.rest }}
+              />
+            </Block>
+          )}
 
           {/* "The Earthwork theme..." onward — split out of the intro column so it
               can be positioned independently. */}

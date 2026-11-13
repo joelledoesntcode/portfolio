@@ -413,6 +413,7 @@ export default function ProjectProfile({ title }: { title: string }) {
                 height: "100%",
                 border: "none",
                 padding: 0,
+                color: "#333",
                 cursor: "crosshair",
                 backgroundImage: `url(https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg)`,
                 backgroundSize: "cover",
