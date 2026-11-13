@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Photoshop sources — too large for GitHub (panelrender.psd is 227 MB, the
+# per-file limit is 100 MB). Export to public/*.jpg and commit that instead.
+*.psd
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

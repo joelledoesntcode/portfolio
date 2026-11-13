@@ -102,6 +102,9 @@ export default function ProjectProfile({ title }: { title: string }) {
           <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
             diploma 5, architectural association
           </p>
+          <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: 0 }}>
+            unit masters: nana biamah ofosu, giles tettey nartey
+          </p>
         </div>
 
         {/* intro subtext — matches other projects' description column */}
@@ -120,17 +123,14 @@ export default function ProjectProfile({ title }: { title: string }) {
             Peranakan identity, indigenous to the strait itself.
           </p>
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 12px 0" }}>
-            Colonial and postcolonial territorial reorganisation severed these
-            trade circuits; ethnic persecution and cultural suppression fractured
-            the community, precipitating the abandonment and dilapidation of its
-            built fabric.
+            Colonial and postcolonial borders severed these trade routes, while
+            persecution and cultural suppression fractured the community, leaving
+            its buildings abandoned and in decay.
           </p>
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-            The proposal revitalises these structures as a contemporary clan
-            house, reinstating commerce at the street threshold while embedding a
-            collective cultural archive where artefacts and ancestral memory are
-            selectively accessed, enabling the community to reinscribe its own
-            spatial historiography.
+            The proposal is a contemporary clan house that restores street-level
+            commerce and adds a selectively accessed archive of ancestral memory,
+            enabling the community to rewrite its own spatial history.
           </p>
         </div>
 
@@ -187,11 +187,9 @@ export default function ProjectProfile({ title }: { title: string }) {
             zIndex: 5,
           }}
         >
-          At the height of the maritime Silk Road, Zheng He's fifteenth-century
-          voyages extended China's trade into Southeast Asia. Some Chinese
-          merchants stayed, intertwining their traditions with local Malay
-          communities. From this exchange emerged Peranakan culture. meaning,
-          people born of the strait.
+          Zheng He’s 15th century Silk Road voyages carried Chinese trade into
+          Southeast Asia. Merchants who stayed blended their traditions with the
+          local Malay, creating Peranakan culture: people born of the strait.
         </p>
 
         {/* text above col.gif — zero-height wrapper so it doesn't shift any image */}
@@ -211,10 +209,10 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            The British settled Malaysia. The Dutch took Indonesia. A fluid
-            corridor was divided between competing empires. The foreign empires
-            overwrote the pre-existing informal mobilities of the Strait. The
-            strait was reorganised into a strategy to divide and conquer.
+            The British took Malaya, the Dutch took Indonesia; a fluid corridor
+            was split between rival empires. The old informal movements across
+            the strait were overwritten, and the strait became a tool of divide
+            and conquer.
           </p>
         </div>
 
@@ -253,11 +251,9 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Peranakan enclaves thickened around two key ports: Penang and Medan.
-            Two cities facing each other across the water, shaped by the same
-            networks, pulled by different colonial hands. both became central
-            nodes in the extractive machine, organised entirely by the logic of
-            colonial commodification.
+            Peranakan enclaves gathered in Penang and Medan: twin cities across
+            the water, split by rival colonial hands and absorbed into the same
+            extractive machine.
           </p>
         </div>
 
@@ -296,11 +292,9 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Then independence arrived. With it, the hunger to reinscribe national
-            identity. Culture became a tool of differentiation. Penang turned
-            toward preservation. Across the Strait, Indonesia's government
-            systematically erased Peranakan identity, names, language, and
-            culture.
+            Then independence came, and with redefining national identity,
+            Malaysia chose preservation, while Indonesia systematically erased
+            Chinese language and culture.
           </p>
         </div>
 
@@ -451,10 +445,9 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Erasure is an inevitable effect of re-inscription, especially when the
-            hand drawing the lines are held by someone else. Where cultural nodes
-            shrink back into the domestic space, the altar table is the only
-            surviving reminder of belonging.
+            Erasure follows rewriting, especially when someone else holds the
+            pen. As culture retreats into the home, the altar table becomes the
+            last reminder of belonging.
           </p>
         </div>
 
@@ -493,10 +486,9 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            In modern day, tracing enclaves from surviving buildings and ancestral
-            accounts, a difference in geography emerges. Heritage is embedded in
-            Penang's grid, whereas temples and clan houses were pushed to Medan's
-            margins.
+            When tracing enclaves through surviving buildings and family
+            accounts, the two cities diverge. In Penang, heritage sits inside the
+            city grid. In Medan, they are pushed to the margins.
           </p>
         </div>
 
@@ -544,11 +536,36 @@ export default function ProjectProfile({ title }: { title: string }) {
             maxWidth: "380px",
             height: "auto",
             margin: "40px auto 0 auto",
+            /* flush to the right margin: centred left is 623.5, so +623.5 puts the
+               380px image's right edge on the 1627px content edge. */
             position: "relative",
-            left: "400px",
+            left: "623.5px",
             top: "-200px",
           }}
         />
+
+        {/* modelmalacca.jpg — side by side with appa.png, to its left and
+            top-aligned. Absolutely placed inside a zero-height wrapper so adding
+            it shifts nothing else. The wrapper sits at appa's flow bottom; appa is
+            pulled up 200px and renders 617px tall at 380px wide, so its visible
+            top is at -817. appa now starts at 1247 in wrapper coords, so a 380px
+            image with a 24px gap starts at 843.5. */}
+        <div style={{ position: "relative", height: 0 }}>
+          <img
+            src={asset("/modelmalacca.jpg")}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{
+              position: "absolute",
+              top: "-607px",
+              left: "843.5px",
+              display: "block",
+              width: "380px",
+              height: "auto",
+            }}
+          />
+        </div>
 
         {/* text next to 777 — zero-height wrapper so no image shifts */}
         <div style={{ position: "relative", height: 0 }}>
@@ -567,12 +584,10 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            an apparatus that reinterprets the peranakan tok sembayang, a domestic
-            altar used to worship ancestors. a colonial map is laid onto the lower
-            tier over a lightbox; on the surface above, memories and personal
-            interpretations are drawn over it. lived experience layered across
-            fixed colonial cartography. the two are read as one, the new
-            inscription sitting on top of the old.
+            an apparatus reinterpreting the peranakan ancestral altar. a colonial
+            map lies on the lower tier over a lightbox, memories are drawn on the
+            surface. lived experience is layered over fixed colonial cartography
+            and the two read as one.
           </p>
         </div>
 
@@ -612,9 +627,8 @@ export default function ProjectProfile({ title }: { title: string }) {
             }}
           >
             the malacca strait once mirrored a shared identity between penang and
-            medan. both cities emerged from the same network, but diverged. the
-            project seeks to repair this fracture, returning agency to peranakan
-            communities on both sides of the strait.
+            medan. the project seeks to mend this fracture and return agency to
+            peranakan communities on both shores.
           </p>
         </div>
 
@@ -732,6 +746,33 @@ export default function ProjectProfile({ title }: { title: string }) {
           }}
         />
 
+        {/* text under frontrender.jpg — zero-height wrapper so no image shifts.
+            The wrapper sits at frontrender's flow bottom; frontrender is pulled up
+            1200px, so -1200 + 24 lands 24px below its visible bottom. left 593.5
+            is frontrender's own left edge (centred 393.5 + its 200px offset). */}
+        <div style={{ position: "relative", height: 0 }}>
+          <p
+            style={{
+              position: "absolute",
+              top: "-1176px",
+              left: "593.5px",
+              width: "19.5%",
+              paddingRight: "24px",
+              boxSizing: "border-box",
+              fontSize: "0.7rem",
+              fontWeight: 300,
+              textAlign: "justify",
+              margin: 0,
+              zIndex: 5,
+            }}
+          >
+            Peranakan identity lived in ornament laid over colonial buildings,
+            impermanent and easily stripped away. What happens when ornament
+            becomes load-bearing, and culture is carved into the structure
+            instead of painted onto it?
+          </p>
+        </div>
+
         {/* malaccaplan.jpg — under frontrender (normal flow) */}
         <img
           src={asset("/malaccaplan.jpg")}
@@ -764,6 +805,112 @@ export default function ProjectProfile({ title }: { title: string }) {
             left: "-200px",
           }}
         />
+
+        {/* text under workshop.jpg — zero-height wrapper so no image shifts.
+            The wrapper sits at workshop's flow bottom; workshop is pulled up
+            1400px, so -1400 + 24 lands 24px below its visible bottom. left 263.5
+            is workshop's own left edge (centred 463.5 − its 200px offset). */}
+        <div style={{ position: "relative", height: 0 }}>
+          <p
+            style={{
+              position: "absolute",
+              top: "-1376px",
+              left: "263.5px",
+              width: "19.5%",
+              paddingRight: "24px",
+              boxSizing: "border-box",
+              fontSize: "0.7rem",
+              fontWeight: 300,
+              textAlign: "justify",
+              margin: 0,
+              zIndex: 5,
+            }}
+          >
+            Synonymous to the apparatus, the workshop is a site of active
+            re-inscription, a space to protect cultural arts made by and for the
+            community.
+          </p>
+        </div>
+
+        {/* archive.gif (second instance) + its text — below the workshop text.
+            Both absolutely placed in a zero-height wrapper so no image shifts.
+            Wrapper origin is workshop's flow bottom: the workshop text ends at
+            -1331, the gif sits 40px below it (315px tall at 560px wide), and its
+            text 24px under that. left 263.5 matches workshop's left edge. */}
+        <div style={{ position: "relative", height: 0 }}>
+          <img
+            src={asset("/archive.gif")}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{
+              position: "absolute",
+              top: "-1291px",
+              left: "263.5px",
+              display: "block",
+              width: "560px",
+              height: "auto",
+            }}
+          />
+          <p
+            style={{
+              position: "absolute",
+              top: "-952px",
+              left: "263.5px",
+              width: "19.5%",
+              paddingRight: "24px",
+              boxSizing: "border-box",
+              fontSize: "0.7rem",
+              fontWeight: 300,
+              textAlign: "justify",
+              margin: 0,
+              zIndex: 5,
+            }}
+          >
+            The archive lines the clan house's inner walls, holding ancestral
+            tablets and family artefacts that anchor the community's shared
+            identity. Carefully placed windows veil the facade, so outsiders can
+            glimpse what lies within but never fully enter.
+          </p>
+
+          {/* panelrender.jpg + its text — under the archive gif, in the empty
+              band left by workshop being pulled up. Kept to 340px wide / left 100
+              so the portrait render clears malaccaplan.jpg (which starts at x
+              463.5) and still ends above the flow bottom, so the page height and
+              bottom margin are unchanged. */}
+          <img
+            src={asset("/panelrender.jpg")}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{
+              position: "absolute",
+              top: "-845px",
+              left: "100px",
+              display: "block",
+              width: "340px",
+              height: "auto",
+            }}
+          />
+          <p
+            style={{
+              position: "absolute",
+              top: "-216px",
+              left: "100px",
+              width: "19.5%",
+              paddingRight: "24px",
+              boxSizing: "border-box",
+              fontSize: "0.7rem",
+              fontWeight: 300,
+              textAlign: "justify",
+              margin: 0,
+              zIndex: 5,
+            }}
+          >
+            Detachable castings with family trees are placed on the inside of the
+            archive.
+          </p>
+        </div>
       </div>
     </div>
   );
