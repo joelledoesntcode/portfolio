@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { asset } from "../lib/asset";
 import { usePhone } from "../lib/usePhone";
 
@@ -75,12 +75,18 @@ const TRIPTYCHS: Item[][] = [
   ],
 ];
 
-// Props kept optional so the existing call site (which passes `images`) still
-// works — the misc page now sources its content from TRIPTYCHS above.
-type Props = { images?: { src: string; caption: string }[] };
+export function getNextMiscGallery(openId: string): string {
+  const items = TRIPTYCHS.flat();
+  const index = items.findIndex((item) => item.id === openId);
+  return items[(index + 1) % items.length].id;
+}
 
-export default function ProjectCover(_props: Props) {
-  const [openId, setOpenId] = useState<string | null>(null);
+type Props = {
+  openId: string | null;
+  onOpenGallery: (id: string) => void;
+};
+
+export default function ProjectCover({ openId, onOpenGallery }: Props) {
   const [hoverId, setHoverId] = useState<string | null>(null);
   // On phones both the thumbnail row and the gallery grid stack into a single
   // vertical column — five across is unreadable at that width.
@@ -97,22 +103,10 @@ export default function ProjectCover(_props: Props) {
         style={{
           width: "100%",
           boxSizing: "border-box",
-          padding: phone ? "0 20px 10vh" : "0 6vw 12vh",
+          // top padding clears the fixed close button
+          padding: phone ? "52px 20px 10vh" : "52px 6vw 12vh",
         }}
       >
-        <button
-          onClick={() => setOpenId(null)}
-          style={{
-            border: "none",
-            background: "transparent",
-            cursor: "crosshair",
-            fontSize: "0.85rem",
-            fontWeight: 300,
-            padding: "1vh 0 3vh",
-          }}
-        >
-          ← back
-        </button>
         {openItem.title && (
           <h2 style={{ fontSize: "0.9rem", fontWeight: 300, margin: "0 0 3vh" }}>
             {openItem.title}
@@ -124,7 +118,7 @@ export default function ProjectCover(_props: Props) {
             style={{
               display: "grid",
               gridTemplateColumns: phone ? "1fr" : "repeat(5, 1fr)",
-              gap: phone ? "20px" : "2vw",
+              gap: phone ? "2px" : "2vw",
               alignItems: "start",
             }}
           >
@@ -138,7 +132,13 @@ export default function ProjectCover(_props: Props) {
             ))}
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4vh" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: phone ? "2px" : "4vh",
+            }}
+          >
             {images.map((img, i) => (
               <img
                 key={i}
@@ -187,19 +187,19 @@ export default function ProjectCover(_props: Props) {
           {row.map((item, i) => (
             <button
               key={item.id}
-              onClick={() => setOpenId(item.id)}
+              onClick={() => onOpenGallery(item.id)}
               onMouseEnter={() => setHoverId(item.id)}
               onMouseLeave={() => setHoverId((h) => (h === item.id ? null : h))}
               style={{
                 position: "relative",
                 flex: 1,
-                // in a column, flex-start would shrink the button to its
-                // content and collapse the percentage-width image inside it
-                alignSelf: phone ? "stretch" : "flex-start",
+                // Keep thumbnails level when neighboring captions wrap differently.
+                alignSelf: phone ? "start" : "flex-start",
                 width: phone ? "100%" : undefined,
                 border: "none",
                 padding: 0,
                 background: "transparent",
+                color: "#333",
                 cursor: "crosshair",
               }}
             >
