@@ -139,15 +139,34 @@ function Face({
         {texture ? (
           <TexturedFaceMaterial texture={texture} entrance={entrance} />
         ) : (
-          // blank panel — no image yet
+          // blank panel — no image yet. The miscellaneous and Malacca Strait
+          // tiles stay fully transparent (only text + dotted edges show);
+          // any other blank face is white.
           <a.meshBasicMaterial
             transparent
-            opacity={entrance}
+            opacity={
+              project.title === "miscellaneous" ||
+              project.title.startsWith("Waters of Unfinished Maps")
+                ? 0
+                : entrance
+            }
             side={THREE.DoubleSide}
             color={"white"}
           />
         )}
       </mesh>
+      {project.title === "miscellaneous" && (
+        <Text
+          position={[0, 0, 0.01]}
+          font={asset("/open-sans-300.woff")}
+          fontSize={CUBE_SIZE * 0.125}
+          color="#333"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ???
+        </Text>
+      )}
       <FaceDottedEdges
         size={CUBE_SIZE}
         opacity={edgeOpacity as unknown as number}
@@ -360,18 +379,11 @@ function Cube({
       rotation: [0, -Math.PI / 2, 0],
       unfoldPosition: [-spread, 0, 0],
       unfoldRotation: [0, -Math.PI / 2, 0],
-      texture: "/cover.png",
+      texture: "", // no cover image — show a "?" in the middle instead
       project: {
         title: "miscellaneous",
         description: "Main description for Cover.",
-        images: [
-          { src: "/stone1.png", caption: "" },
-          { src: "/stone2.png", caption: "" },
-          { src: "/stone3.png", caption: "" },
-          { src: "/stone4.png", caption: "" },
-          { src: "/bamboo.jpg", caption: "" },
-          { src: "/bamboo2.jpg", caption: "" },
-        ],
+        images: [],
       },
     },
   ];
@@ -603,7 +615,7 @@ export default function App() {
           }}
         >
           {/* Title + description (Omah / Pilgrim / Fish Market / PTF render their own title inside their component) */}
-          {selectedProject.title !== "Omah Mimpi" && selectedProject.title !== "Ode to the Modern Pilgrim" && selectedProject.title !== "Røyk — A Bergen Fish Market" && selectedProject.title !== "Peter Tatchell Foundation" && selectedProject.title !== "Waters of Unfinished Maps: Reinscribing the Malacca Strait" && (
+          {selectedProject.title !== "Omah Mimpi" && selectedProject.title !== "Ode to the Modern Pilgrim" && selectedProject.title !== "Røyk — A Bergen Fish Market" && selectedProject.title !== "Peter Tatchell Foundation" && selectedProject.title !== "Waters of Unfinished Maps: Reinscribing the Malacca Strait" && selectedProject.title !== "miscellaneous" && (
             <div
               style={{
                 display: "flex",
