@@ -159,6 +159,14 @@ export type CollageImage = {
    * room to drop — this is what opens up the vertical stagger.
    */
   phoneRowMinHeight?: number;
+  /**
+   * On phones, a line of text shown directly under this image, inside its own
+   * wrapper (so it stays with its half of a `pair`). Ignored on desktop, where
+   * captions are placed as their own blocks.
+   */
+  phoneCaption?: string;
+  /** Put `phoneCaption` above the image instead of under it. */
+  phoneCaptionAbove?: boolean;
 };
 
 /**
@@ -295,7 +303,16 @@ export function ImageCells({
             minHeight: minHeight ? `${minHeight}vw` : undefined,
           }}
         >
-          {[images[i], images[partner]].map((im) => (
+          {[images[i], images[partner]].map((im, k, pairImgs) => {
+            // if the other half has a caption above its image, reserve the same
+            // space here (an invisible copy of it) so the two images stay level
+            const other = pairImgs[1 - k];
+            const spacer =
+              !(im.phoneCaption && im.phoneCaptionAbove) &&
+              other.phoneCaption && other.phoneCaptionAbove
+                ? other.phoneCaption
+                : null;
+            return (
             // each half sits in its own wrapper, which carries the width and
             // the cross-axis alignment; the image just fills it
             <div
@@ -307,6 +324,19 @@ export function ImageCells({
                 marginTop: im.phoneOffsetY ? `${im.phoneOffsetY}%` : undefined,
               }}
             >
+              {((im.phoneCaption && im.phoneCaptionAbove) || spacer) && (
+                <p
+                  aria-hidden={spacer ? true : undefined}
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 300,
+                    margin: "0 0 6px 0",
+                    visibility: spacer ? "hidden" : undefined,
+                  }}
+                >
+                  {spacer ?? im.phoneCaption}
+                </p>
+              )}
               <img
                 src={asset(im.src)}
                 alt={im.caption}
@@ -314,8 +344,14 @@ export function ImageCells({
                 decoding="async"
                 style={{ width: "100%", height: "auto", display: "block" }}
               />
+              {im.phoneCaption && !im.phoneCaptionAbove && (
+                <p style={{ fontSize: "0.7rem", fontWeight: 300, margin: "6px 0 0 0" }}>
+                  {im.phoneCaption}
+                </p>
+              )}
             </div>
-          ))}
+            );
+          })}
         </Block>
       );
       continue;

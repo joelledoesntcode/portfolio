@@ -48,7 +48,13 @@ const CAPTION_TOWER: BlockSpec = { top: 154, left: 10, width: 19.5 }; // under m
 const CAPTION_PULL: BlockSpec = { top: 107, left: 48, width: 20 }; // beside 1.PNG
 const CAPTION_RELEASE: BlockSpec = { top: 109, left: 84, width: 20, height: 24 }; // beside 2.PNG
 const CAPTION_LEAVE: BlockSpec = { top: 138, left: 70, width: 16 }; // right of 3.PNG
-const CAPTION_FIND: BlockSpec = { top: 164, left: 90, width: 20 }; // below 4.PNG
+// phoneOrder 138.5 puts it straight after the 3/4.png row (ordered at 3.png's
+// top, 138vh) on phones, ahead of the tower caption at 154vh.
+// Desktop: left 84 / width 16 keeps the block inside the 1707px canvas (left 90
+// / width 20 ran to 110% and clipped). 4.png is portrait, so it paints narrower
+// than its cell: ~147px wide centred at ~1521px at a 900px-tall window, i.e. a
+// left edge near 1447px, which left 84% (+12px padding) lands on.
+const CAPTION_FIND: BlockSpec = { top: 164, left: 84, width: 16, phoneOrder: 138.5 }; // below 4.PNG
 
 /** Splits the intro at `idx`, trimming the <br/>s that joined the two halves. */
 function phoneSplit(text: string, idx: number) {
@@ -142,27 +148,27 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
             </p>
           </Block>
 
-          {/* Caption text beside 1.PNG — right-aligned so it sits against the
-              image's left edge, top aligned with 1.PNG's cell top (116vh). */}
-          <Block phone={phone} spec={CAPTION_PULL} style={textColumn(phone)}>
-            <p style={{ ...line, textAlign: phone ? "left" : "right" }}>
-              Pull for refuge...
-            </p>
-          </Block>
+          {/* Captions beside 1.PNG and 2.PNG. Desktop only: on phones each one
+              sits directly under its image via `phoneCaption` (see App.tsx). */}
+          {!phone && (
+            <>
+              {/* Beside 1.PNG — right-aligned so it sits against the image's
+                  left edge, top aligned with 1.PNG's cell top. */}
+              <Block phone={phone} spec={CAPTION_PULL} style={textColumn(phone)}>
+                <p style={{ ...line, textAlign: "right" }}>Pull for refuge...</p>
+              </Block>
 
-          {/* Caption text beside 2.PNG — left-aligned, bottom aligned with 2.PNG's
-              cell bottom (top 121vh + 24vh height = 145vh). */}
-          <Block
-            phone={phone}
-            spec={CAPTION_RELEASE}
-            style={
-              phone
-                ? textColumn(phone)
-                : { ...textColumn(phone), display: "flex", alignItems: "flex-end" }
-            }
-          >
-            <p style={line}>...Release for repose, shape your own spaces</p>
-          </Block>
+              {/* Beside 2.PNG — left-aligned, bottom aligned with 2.PNG's cell
+                  bottom. */}
+              <Block
+                phone={phone}
+                spec={CAPTION_RELEASE}
+                style={{ ...textColumn(phone), display: "flex", alignItems: "flex-end" }}
+              >
+                <p style={line}>...Release for repose</p>
+              </Block>
+            </>
+          )}
 
           {/* Caption text on the right side of 3.PNG — left-aligned, starting at
               3.PNG's right edge (left 62% + 22% width = 84%), top at 142vh. */}
@@ -173,7 +179,9 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
           {/* Caption text below 4.PNG — aligned under its left edge (75%), just
               below its cell bottom (142vh + 24vh = 166vh). */}
           <Block phone={phone} spec={CAPTION_FIND} style={captionColumn(phone)}>
-            <p style={line}>...For the next pilgrim to find</p>
+            <p style={{ ...line, textAlign: phone ? "right" : undefined }}>
+              ...For the next pilgrim to find
+            </p>
           </Block>
 
           {/* Image cells, placed against the page inset by the 40px gutters. */}
