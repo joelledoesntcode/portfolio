@@ -347,7 +347,7 @@ function Cube({
       project: {
         title: "Ode to the Modern Pilgrim",
         description:
-          "We have an innate desire to shape the earth for our own, echoing our ancestral pilgrims’ relentless pursuit of innovation. Now, we are simply contemporary travellers, finding spaces we can control in a city so unforgiving to ownership of our environment. <br/><br/>My proposal pays tribute to the drive to transform the earth, through an adaptable tower that invites users to shape their environment - an exploration of the human condition. <br/><br/>The Earthwork theme invited me to engage with the site’s layered history—Roman tracks and ancient brick culverts. <br/><br/>Inspired by Roman engineers, the “Fathers of Trusses,” and Canterbury builders who raised cathedrals, I reflected on humanity’s timeless pursuit of progress and creation.",
+          "We have an innate desire to shape the earth for our own, just like our ancestral pilgrims’ relentless pursuit of innovation. Now, we are simply contemporary travellers, finding spaces we can control in a city so unforgiving to ownership of our environment. <br/><br/>My proposal pays tribute to the drive to transform the earth - an exploration of the human condition. <br/><br/>The Earthwork theme invited me to engage with the site’s layered history—Roman tracks and ancient brick culverts. <br/><br/>Inspired by Roman engineers, the “Fathers of Trusses,” and Canterbury builders who raised cathedrals, I reflected on humanity’s timeless pursuit of progress and creation.",
         images: [
           { src: "/antecollage.png", caption: "", scale: 1.8 },
           { src: "/culv1.jpg", caption: "Wooden beam from Roman railway", scale: 0.85, pair: "roman", phoneWidth: 47, phoneAlign: "top" as const, phoneOrder: 28 },
@@ -370,7 +370,7 @@ function Cube({
       project: {
         title: "Røyk — A Bergen Fish Market",
         description:
-          "This market celebrates the art of smoking fish, a cultural practice revered in Bergen. The design aims to capture the beauty of communal dining and the magic of food preparation. The structure aspires to exist as a unique modern building among its historical surroundings while referencing the site’s vernacular architecture. It is centered around placemaking, inviting in the whole community.",
+          "this market celebrates the art of smoking fish, a cultural practice revered in bergen. it aims to capture the beauty of communal dining and food preparation.\n\nit exists as a modern building among its historical surroundings, referencing the site’s vernacular architecture.",
         images: [
           { src: "/undergif.gif", caption: "", hero: true },
           { src: "/siteplanberg2.jpg", caption: "", pair: "berg-site" },
@@ -409,7 +409,7 @@ function Cube({
       project: {
         title: "Peter Tatchell Foundation",
         description:
-          "Peter Tatchell has dedicated his activist career to championing LGBTQIA+ rights through his foundation. The institution needs expanding, including an exhibition of his activism, a historical archive, and an office space.<br/><br/>The design aimed to embody queer identity—a monument standing boldly. It is a sanctuary for the LGBTQIA+ and an inclusive educational space for all. It is a statement of activism and a tribute to Tatchell’s unwavering dedication for a more equitable world.",
+          "this project extends the peter tatchell foundation, home to decades of lgbtqia+ activism, with three new spaces: an exhibition, a historical archive and offices.<br/><br/>the design embodies queer identity as a bold monument: a sanctuary for the community, an inclusive place of learning for all, and a tribute to tatchell’s lifelong fight for a fairer world.",
         images: [
           { src: "/bigsiteptf.png", caption: "Site — the King's Arms, Salford / Manchester", scale: 1.3 },
           { src: "/kingsarms.png", caption: "The existing King's Arms pub", scale: 0.5 },
@@ -418,13 +418,15 @@ function Cube({
           { src: "/sketchcompilation2.png", caption: "Initial sketches — 'squaring the circle'", scale: 1.2 },
           { src: "/diaptf.jpg", caption: "Concept — the visitor journey", scale: 0.85 },
           { src: "/ptfmodel.PNG", caption: "Site model" },
-          { src: "/ptfgf.png", caption: "Ground floor plan", scale: 1.9 },
-          { src: "/technical.jpg", caption: "Retrofit construction detail", scale: 1.2 },
+          { src: "/section.png", caption: "Section", scale: 1.9 },
+          { src: "/technical.jpg", caption: "Retrofit construction detail", scale: 2.4 },
           { src: "/joelle_warsono_portfolio_Page_13.jpg", caption: "Locally sourced stone — minimised emissions" },
           { src: "/highlevel.png", caption: "Aerial view in context" },
           { src: "/exhi.png", caption: "Exhibition space", scale: 1.45 },
           { src: "/officenew.png", caption: "Office space", scale: 2 },
           { src: "/roofrender.png", caption: "The monument in its greenspace" },
+          { src: "/ptfgf.png", caption: "Ground floor plan" },
+          { src: "/ptfcollage.png", caption: "Collage" },
         ],
       },
     },

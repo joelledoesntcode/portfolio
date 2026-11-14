@@ -48,6 +48,8 @@ export const IMAGE_ASPECTS: Record<string, number> = {
   "/omah_weave1.png": 1.447,
   "/omah_weave2.PNG": 0.7292,
   "/ptfgf.png": 1.414,
+  "/section.png": 1.4148,
+  "/ptfcollage.png": 1.4148,
   "/ptfmodel.PNG": 1.8444,
   "/roofrender.png": 1.5093,
   "/siteplanberg2.jpg": 1.3836,

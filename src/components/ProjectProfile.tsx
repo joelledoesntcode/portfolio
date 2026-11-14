@@ -109,10 +109,7 @@ export default function ProjectProfile({ title }: { title: string }) {
             medan, indonesia
           </p>
           <p style={{ ...META_TEXT, margin: 0 }}>
-            masters project year 1
-          </p>
-          <p style={{ ...META_TEXT, margin: 0 }}>
-            diploma 5, architectural association
+            masters project year 1, diploma 5, architectural association
           </p>
           <p style={{ ...META_TEXT, margin: 0 }}>
             unit masters: nana biamah ofosu, giles tettey nartey
@@ -820,21 +817,23 @@ export default function ProjectProfile({ title }: { title: string }) {
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
-            top: phone ? "auto" : "-1400px",
-            left: phone ? "auto" : "-200px",
+            top: phone ? "auto" : "-1420px",
+            left: phone ? "auto" : "-220px",
           }}
         />
 
-        {/* text under workshop.jpg — zero-height wrapper so no image shifts.
+        {/* text above workshop.jpg — zero-height wrapper so no image shifts.
             The wrapper sits at workshop's flow bottom; workshop is pulled up
-            1400px, so -1400 + 24 lands 24px below its visible bottom. left 263.5
-            is workshop's own left edge (centred 463.5 − its 200px offset). */}
+            1420px and is 393.75px tall (700px wide, 16:9), so its visible top
+            is at -1813.75. Anchored by `bottom` so the text ends 24px above that
+            whatever its line count. left 233.5 = workshop's left edge (centred
+            463.5 − its 220px offset) − 10. */}
         <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
           <p
             style={{
               position: phone ? "static" : "absolute",
-              top: phone ? "auto" : "-1376px",
-              left: phone ? "auto" : "263.5px",
+              bottom: phone ? "auto" : "1837.75px",
+              left: phone ? "auto" : "233.5px",
               width: phone ? "100%" : "19.5%",
               paddingRight: "24px",
               boxSizing: "border-box",
@@ -898,7 +897,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               463.5) and still ends above the flow bottom, so the page height and
               bottom margin are unchanged. */}
           <img
-            src={asset("/panelrender.jpg")}
+            src={asset("/panel2.gif")}
             alt=""
             loading="lazy"
             decoding="async"

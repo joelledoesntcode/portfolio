@@ -81,7 +81,11 @@ export default function ProjectFishMarket({ title, description, images }: Props)
               <br />
               Undergraduate Project Year 3
             </p>
-            <p style={body}>{description}</p>
+            {description.split("\n\n").map((para, i) => (
+              <p key={i} style={{ ...body, margin: i > 0 ? "10px 0 0 0" : 0 }}>
+                {para}
+              </p>
+            ))}
           </Block>
 
           {/* Caption paragraph below the undergif.gif — same column width/font as
@@ -99,8 +103,7 @@ export default function ProjectFishMarket({ title, description, images }: Props)
           <Block phone={phone} spec={CAPTION_MARKET} style={textColumn(phone)}>
             <p style={body}>
               The market invites sensory engagement, its openness carrying aromas
-              through the air and fish displayed like works of art. Tradition here
-              is not only seen, but experienced.
+              through the air and fish displayed like works of art.
             </p>
           </Block>
 

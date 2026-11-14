@@ -23,7 +23,7 @@ const CELLS: { top: number; left: number; width: number; height: number }[] = [
   { top: 112, left: 9, width: 20, height: 13 }, // omah_ver1
   { top: 144, left: 18, width: 20, height: 13 }, // omah_ver2 (under ver1)
   { top: 154, left: 30, width: 80, height: 52 }, // omah_plan
-  { top: 218, left: -10, width: 72, height: 48 }, // diaomah
+  { top: 188, left: -37, width: 72, height: 48 }, // diaomah
 ];
 
 // Canvas height = lowest image bottom + top margin, so bottom margin == top margin.
@@ -59,7 +59,7 @@ const captionColumn = (phone: boolean): React.CSSProperties => ({
   boxSizing: "border-box",
 });
 
-export default function ProjectOmah({ title, description, images }: Props) {
+export default function ProjectOmah({ title, images }: Props) {
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
       {(phone) => (
@@ -74,7 +74,7 @@ export default function ProjectOmah({ title, description, images }: Props) {
               {title}
             </h1>
             <p style={{ ...line, ...META_TEXT, margin: "0 0 4px 0" }}>
-              “House of Dreams”: A Beacon of Cultural Education
+              “house of dreams”
             </p>
             <p style={{ ...line, ...META_TEXT, margin: "0 0 2px 0" }}>
               Rembitan Village, Lombok, Indonesia
@@ -82,19 +82,16 @@ export default function ProjectOmah({ title, description, images }: Props) {
             <p style={{ ...line, ...META_TEXT, margin: "0 0 24px 0" }}>
               Self-initiated project for Titian Foundation (2024)
             </p>
-            <p style={italic}>
-              ‘The Actions Of Others Affect The Way I Act, And My Actions Affect The Decisions Of Others’
-            </p>
-            <p style={{ ...line, margin: "0 0 16px 0" }}>
-              - Salen, K., Walz, s. P., &amp; Deterding, s. (Eds.). (2014). The Gameful World: Approaches, Issues, Applications. MIT press.
-            </p>
           </Block>
 
           {/* "In Rembitan..." split out of the title block, moved 10 right and 5
               down from its original column position. */}
           <Block phone={phone} spec={INTRO} style={textColumn(phone)}>
+            <p style={{ ...line, textAlign: "justify", margin: "0 0 16px 0" }}>
+              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. My proposal envisions a cultural hub to revitalize traditional trade with a sustainable model.
+            </p>
             <p style={{ ...line, textAlign: "justify" }}>
-              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. {description}
+              It integrates competition and reward through community building to engage participants, fostering motivation for achievement.
             </p>
           </Block>
 
