@@ -152,9 +152,11 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "560px",
+            maxWidth: phone ? "none" : "560px",
             height: "auto",
-            margin: "0 auto",
+            // phone: 12px on top of the column's 12px gap, so the gif gets a
+            // 24px breather before the silk squares
+            margin: phone ? "0 auto 12px auto" : "0 auto",
             position: "relative",
             left: phone ? "auto" : "420px",
             top: phone ? "auto" : "-250px",
@@ -172,6 +174,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               flexDirection: "row",
             flexWrap: "wrap",
               alignItems: "flex-start",
+              justifyContent: phone ? "space-between" : undefined,
               gap: phone ? "6px" : "28px",
             }}
           >
@@ -235,7 +238,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "980px",
+            maxWidth: phone ? "none" : "980px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -319,6 +322,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               flexDirection: "row",
             flexWrap: "wrap",
               alignItems: "flex-start",
+              justifyContent: phone ? "space-between" : undefined,
               gap: phone ? "6px" : "16px",
             }}
           >
@@ -337,7 +341,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "740px",
+            maxWidth: phone ? "none" : "740px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -356,9 +360,9 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "380px",
+            maxWidth: phone ? "none" : "380px",
             height: "auto",
-            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
+            margin: phone ? "12px auto 0 auto" : "40px auto 0 auto",
             position: "relative",
             top: phone ? "auto" : "-1193px",
             left: phone ? "auto" : "600px",
@@ -370,7 +374,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             position: "relative",
             width: "100%",
-            maxWidth: "740px",
+            maxWidth: phone ? "none" : "740px",
             paddingTop: "min(56.25%, 416px)",
             margin: "80px auto 0 auto",
             top: phone ? "auto" : "-250px",
@@ -504,7 +508,15 @@ export default function ProjectProfile({ title }: { title: string }) {
           </p>
         </div>
 
-        {/* 333.jpg + 777.jpg — stacked under everything (normal flow) */}
+        {/* 333.jpg + 777.jpg — stacked under everything (normal flow); side by side on phone */}
+        <div
+          style={{
+            display: phone ? "flex" : "contents",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginTop: phone ? "12px" : undefined,
+          }}
+        >
         <img
           src={asset("/333.jpg")}
           alt=""
@@ -512,10 +524,12 @@ export default function ProjectProfile({ title }: { title: string }) {
           decoding="async"
           style={{
             display: "block",
-            width: "100%",
-            maxWidth: "150px",
+            // phone: 333 is 2:3 and 777 is 3:2, so widths of 28% and 63% give
+            // both the same height (42% of the row), with 9% left between them
+            width: phone ? "28%" : "100%",
+            maxWidth: phone ? "none" : "150px",
             height: "auto",
-            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
+            margin: phone ? 0 : "40px auto 0 auto",
             position: "relative",
             left: phone ? "auto" : "-600px",
             top: phone ? "auto" : "-200px",
@@ -528,15 +542,16 @@ export default function ProjectProfile({ title }: { title: string }) {
           decoding="async"
           style={{
             display: "block",
-            width: "100%",
-            maxWidth: "300px",
+            width: phone ? "63%" : "100%",
+            maxWidth: phone ? "none" : "300px",
             height: "auto",
-            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
+            margin: phone ? 0 : "40px auto 0 auto",
             position: "relative",
             left: phone ? "auto" : "-400px",
             top: phone ? "auto" : "-200px",
           }}
         />
+        </div>
         <img
           src={asset("/appa.png")}
           alt=""
@@ -545,9 +560,9 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "380px",
+            maxWidth: phone ? "none" : "380px",
             height: "auto",
-            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
+            margin: phone ? "12px auto 0 auto" : "40px auto 0 auto",
             /* flush to the right margin: centred left is 623.5, so +623.5 puts the
                380px image's right edge on the 1627px content edge. */
             position: "relative",
@@ -612,9 +627,9 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "540px",
+            maxWidth: phone ? "none" : "540px",
             height: "auto",
-            margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
+            margin: phone ? "12px auto 0 auto" : "40px auto 0 auto",
             position: "relative",
             left: phone ? "auto" : "-400px",
             top: phone ? "auto" : "-750px",
@@ -653,7 +668,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "680px",
+            maxWidth: phone ? "none" : "680px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -694,7 +709,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "680px",
+            maxWidth: phone ? "none" : "680px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -710,7 +725,7 @@ export default function ProjectProfile({ title }: { title: string }) {
             flexDirection: "row",
             flexWrap: "wrap",
             alignItems: "flex-start",
-            justifyContent: "center",
+            justifyContent: phone ? "space-between" : "center",
             gap: phone ? "6px" : "48px",
             // `auto` side margins make a flex item shrink-to-fit rather than
             // stretch, which would collapse the percentage-width children
@@ -735,7 +750,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "940px",
+            maxWidth: phone ? "none" : "940px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -753,7 +768,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "840px",
+            maxWidth: phone ? "none" : "840px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
@@ -798,7 +813,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "700px",
+            maxWidth: phone ? "none" : "700px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
           }}
@@ -813,7 +828,7 @@ export default function ProjectProfile({ title }: { title: string }) {
           style={{
             display: "block",
             width: "100%",
-            maxWidth: "700px",
+            maxWidth: phone ? "none" : "700px",
             height: "auto",
             margin: phone ? "12px 0 0 0" : "40px auto 0 auto",
             position: "relative",
