@@ -6,6 +6,8 @@ import CollageCanvas, {
   type BlockSpec,
 } from "./CollageCanvas";
 import { META_TEXT } from "../lib/theme";
+import { usePhone } from "../lib/usePhone";
+import { Figure, Page, Pair, SEGMENT_GAP, Segments, Spread, TitleBlock } from "./Segments";
 
 type Props = {
   title: string;
@@ -60,7 +62,120 @@ const body: React.CSSProperties = {
   margin: 0,
 };
 
+const SMOKEHOUSE_TEXT =
+  "Studying Scandinavia's iconic smokehouses inspired a merging of the traditional roof and tower-like smokestack, their abstracted forms giving rise to a deconstructive architecture rooted in tradition.";
+const MARKET_TEXT =
+  "The market invites sensory engagement, its openness carrying aromas through the air and fish displayed like works of art. Tradition here is not only seen, but experienced.";
+
+// --- desktop: two-partition segments (see Segments.tsx) -----------------------
+//
+// Same design language as Ode to the Modern Pilgrim:
+//   1. left: title block, then the site plan + vernacular study docked
+//      bottom-right as a staggered pair.  right: the hero gif, with the
+//      smokehouse paragraph under it.
+//   2+3, one section whose partitions flow independently:
+//      left: harberg, then axo berg (right), then filletberg (left).
+//      right: bergsketch + model staggered, then back berg with the market
+//      paragraph under it.
+function FishMarketSegments({
+  title,
+  description,
+  images,
+}: {
+  title: string;
+  description: string;
+  images: CollageImage[];
+}) {
+  // look images up by file so the layout doesn't depend on array order
+  const img = (name: string) =>
+    (images.find((im) => im.src === name) ?? { src: name }).src;
+
+  return (
+    <Segments>
+      <Spread>
+        <Page>
+          <TitleBlock
+            title={title}
+            meta={
+              <>
+                Bergen, Norway
+                <br />
+                Undergraduate Project Year 3
+              </>
+            }
+          >
+            <p style={body}>{description}</p>
+          </TitleBlock>
+          {/* Docked bottom-right, like the Pilgrim culverts. In partition
+              terms siteplan is 45% wide (1.38, so ~33% tall) and vern3 29.4%
+              (1.23, ~24% tall), with a 16% gap between: a 90.4% block. vern3
+              drops 12% of the partition to step. */}
+          <div
+            style={{
+              marginTop: "auto",
+              paddingTop: "120px",
+              alignSelf: "flex-end",
+              width: "90.4%",
+            }}
+          >
+            <Pair gap="17.7%">
+              <Figure src={img("/siteplanberg2.jpg")} width="49.78%" outline />
+              <Figure
+                src={img("/vern3.png")}
+                width="32.52%"
+                style={{ marginTop: "13.27%" }}
+              />
+            </Pair>
+          </div>
+        </Page>
+        <Page>
+          <Figure src={img("/undergif.gif")} width="100%" />
+          <p style={{ ...body, marginTop: "8px" }}>{SMOKEHOUSE_TEXT}</p>
+        </Page>
+      </Spread>
+
+      {/* segments 2 + 3 share one two-partition section, so each partition
+          flows on its own: filletberg follows harberg by the usual segment gap
+          instead of waiting for the much taller model column on the right. */}
+      <Spread>
+        <Page>
+          <Figure src={img("/harberg.jpg")} width="100%" />
+          {/* axo berg (0.71) at 55%, set to the right, then filletberg at 75%
+              under it on the left, so the two step diagonally */}
+          <Figure
+            src={img("/axo berg.jpg")}
+            width="55%"
+            outline
+            style={{ marginTop: `${SEGMENT_GAP}px`, alignSelf: "flex-end" }}
+          />
+          <Figure src={img("/filletberg.jpg")} width="75%" style={{ marginTop: "120px" }} />
+        </Page>
+        <Page>
+          {/* bergsketch (0.47) at 20% is ~42.5% tall; model (0.85) runs at
+              74% (~87% tall), which needs a narrower 6% gap to fit; it drops
+              21% to step */}
+          <Pair gap="6%">
+            <Figure src={img("/bergsketch.jpg")} width="20%" />
+            <Figure src={img("/model.png")} width="74%" style={{ marginTop: "21%" }} />
+          </Pair>
+          <Figure
+            src={img("/back berg.jpg")}
+            width="100%"
+            style={{ marginTop: `${SEGMENT_GAP}px` }}
+          />
+          <p style={{ ...body, marginTop: "8px" }}>{MARKET_TEXT}</p>
+        </Page>
+      </Spread>
+    </Segments>
+  );
+}
+
 export default function ProjectFishMarket({ title, description, images }: Props) {
+  const phone = usePhone();
+  if (!phone) {
+    return <FishMarketSegments title={title} description={description} images={images} />;
+  }
+
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
       {(phone) => (
@@ -87,21 +202,13 @@ export default function ProjectFishMarket({ title, description, images }: Props)
           {/* Caption paragraph below the undergif.gif — same column width/font as
               the subtext above. Adjust top/left to reposition. */}
           <Block phone={phone} spec={CAPTION_SMOKEHOUSE} style={textColumn(phone)}>
-            <p style={body}>
-              Studying Scandinavia's iconic smokehouses inspired a merging of the
-              traditional roof and tower-like smokestack, their abstracted forms
-              giving rise to a deconstructive architecture rooted in tradition.
-            </p>
+            <p style={body}>{SMOKEHOUSE_TEXT}</p>
           </Block>
 
           {/* Caption paragraph beside axo berg.jpg — same column width/font as
               the subtext. Adjust top/left to reposition. */}
           <Block phone={phone} spec={CAPTION_MARKET} style={textColumn(phone)}>
-            <p style={body}>
-              The market invites sensory engagement, its openness carrying aromas
-              through the air and fish displayed like works of art. Tradition here
-              is not only seen, but experienced.
-            </p>
+            <p style={body}>{MARKET_TEXT}</p>
           </Block>
 
           {/* Image cells, placed against the page inset by the 40px gutters. */}

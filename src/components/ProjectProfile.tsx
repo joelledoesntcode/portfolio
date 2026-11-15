@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { asset } from "../lib/asset";
 import { usePhone } from "../lib/usePhone";
 import { META_TEXT } from "../lib/theme";
+import { Figure, Page, Pair, Segments, Spread, TitleBlock, Trio, line } from "./Segments";
 
 // The title for this project is rendered by App.tsx (left column).
 const VIDEO_ID = "DjP4-UcvrB8";
@@ -16,10 +17,306 @@ const VIDEO_ID = "DjP4-UcvrB8";
 //                      no horizontal scrollbar).
 const DESIGN_WIDTH = 1707;
 
-export default function ProjectProfile({ title }: { title: string }) {
-  // Facade: show a clean poster + play button until clicked, then load the
-  // YouTube player. Keeps the preview free of the YouTube logo/title.
+// Copy shared by the desktop and phone layouts.
+const TEXT = {
+  intro1:
+    "The Malacca Strait, between the Indonesian and Malaysian archipelago, constitutes a boundary produced through successive layers of mercantile inscription. From these transactional ecologies emerged a diasporic Peranakan identity, indigenous to the strait itself.",
+  intro2:
+    "Colonial and postcolonial borders severed these trade routes, while persecution and cultural suppression fractured the community, leaving its buildings abandoned and in decay.",
+  intro3:
+    "The proposal is a contemporary clan house that restores street-level commerce and adds a selectively accessed archive of ancestral memory, enabling the community to rewrite its own spatial history.",
+  zhengHe:
+    "Zheng He’s 15th century Silk Road voyages carried Chinese trade into Southeast Asia. Merchants who stayed blended their traditions with the local Malay, creating Peranakan culture: people born of the strait.",
+  british:
+    "The British took Malaya, the Dutch took Indonesia; a fluid corridor was split between rival empires. The old informal movements across the strait were overwritten, and the strait became a tool of divide and conquer.",
+  enclaves:
+    "Peranakan enclaves gathered in Penang and Medan: twin cities across the water, split by rival colonial hands and absorbed into the same extractive machine.",
+  independence:
+    "Then independence came, and with redefining national identity, Malaysia chose preservation, while Indonesia systematically erased Chinese language and culture.",
+  erasure:
+    "Erasure follows rewriting, especially when someone else holds the pen. As culture retreats into the home, the altar table becomes the last reminder of belonging.",
+  tracing:
+    "When tracing enclaves through surviving buildings and family accounts, the two cities diverge. In Penang, heritage sits inside the city grid. In Medan, they are pushed to the margins.",
+  apparatus:
+    "an apparatus reinterpreting the peranakan ancestral altar. a colonial map lies on the lower tier over a lightbox, memories are drawn on the surface. lived experience is layered over fixed colonial cartography and the two read as one.",
+  mirrored:
+    "the malacca strait once mirrored a shared identity between penang and medan. the project seeks to mend this fracture and return agency to peranakan communities on both shores.",
+  trade:
+    "Trade defined the rhythms, hierarchies, and social fabric of Peranakan life, producing an architecture where livelihood and identity were structurally bound.",
+  ornament:
+    "Peranakan identity lived in ornament laid over colonial buildings, impermanent and easily stripped away. What happens when ornament becomes load-bearing, and culture is carved into the structure instead of painted onto it?",
+  workshop:
+    "Synonymous to the apparatus, the workshop is a site of active re-inscription, a space to protect cultural arts made by and for the community.",
+  archive:
+    "The archive lines the clan house's inner walls, holding ancestral tablets and family artefacts that anchor the community's shared identity. Carefully placed windows veil the facade, so outsiders can glimpse what lies within but never fully enter.",
+  castings:
+    "Detachable castings with family trees are placed on the inside of the archive.",
+};
+
+
+/**
+ * The project film, as a facade: a clean poster + play button until clicked,
+ * then the YouTube player. Keeps the preview free of the YouTube logo/title.
+ * Fills its (positioned) parent.
+ */
+function FilmEmbed() {
   const [playing, setPlaying] = useState(false);
+  return (
+    <>
+    {playing ? (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3`}
+        title="Waters of Unfinished Maps: Reinscribing the Malacca Strait"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          border: "none",
+        }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    ) : (
+      <button
+        onClick={() => setPlaying(true)}
+        aria-label="Play film"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          border: "none",
+          padding: 0,
+          color: "#333",
+          cursor: "crosshair",
+          backgroundImage: `url(https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg)`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <span
+            style={{
+              width: 0,
+              height: 0,
+              borderTop: "12px solid transparent",
+              borderBottom: "12px solid transparent",
+              borderLeft: "20px solid white",
+              marginLeft: "4px",
+            }}
+          />
+        </span>
+      </button>
+    )}
+    </>
+  );
+}
+
+// --- desktop: two-partition segments (see Segments.tsx) -----------------------
+//
+// Same design language as Pilgrim, Røyk, Peter Tatchell and Omah Mimpi, in the
+// story's order. Each paragraph sits 8px under the picture it belongs to. Pair
+// widths come from the images' aspect ratios (noted inline) so the two come out
+// the same height, and one is dropped about half that height to step; trios
+// step the same way.
+//   1. title block, move1 docked bottom-left      | archive.gif + Zheng He,
+//                                                   penangmedangif + mirrored
+//   2. movement.jpg + independence                | col.gif
+//   3. 111/222/333 trio + British                 | extract.jpg + enclaves
+//   4. the film + erasure                         | silk trio
+//   5. 333.jpg / 777.jpg + tracing                | medanpenang.jpg
+//   6. appa / modelmalacca + apparatus            | (empty)
+//   7. explode.jpg, mod trio docked under it      | shoptax over shophouse + trade
+//   8. workshop.jpg + workshop                    | frontrender + ornament
+//   9. malaccaplan.jpg on its own, centred
+//  10. archive.gif + archive                      | panelrender.jpg + castings
+const para: React.CSSProperties = { ...line, textAlign: "justify", marginTop: "8px" };
+
+function MalaccaSegments({ title }: { title: string }) {
+  const dock: React.CSSProperties = { marginTop: "auto" };
+  return (
+    <Segments>
+      <Spread>
+        <Page>
+          <TitleBlock
+            title={title}
+            meta={
+              <>
+                medan, indonesia
+                <br />
+                masters project year 1
+                <br />
+                diploma 5, architectural association
+                <br />
+                unit masters: nana biamah ofosu, giles tettey nartey
+              </>
+            }
+          >
+            <p style={{ ...line, textAlign: "justify", margin: "0 0 12px 0" }}>{TEXT.intro1}</p>
+            <p style={{ ...line, textAlign: "justify", margin: "0 0 12px 0" }}>{TEXT.intro2}</p>
+            <p style={{ ...line, textAlign: "justify" }}>{TEXT.intro3}</p>
+          </TitleBlock>
+          {/* move1 (portrait, 0.69) docked to the bottom, aligned left; at 50%
+              it is ~72% of the partition tall */}
+          <Figure
+            src="/move1.jpg"
+            width="50%"
+            style={{ ...dock, paddingTop: "120px" }}
+          />
+        </Page>
+        <Page>
+          <Figure src="/archive.gif" width="100%" />
+          <p style={para}>{TEXT.zhengHe}</p>
+          {/* penangmedangif below the archive, docked to the bottom so it ends
+              level with move1 on the left */}
+          <div style={{ ...dock, paddingTop: "200px" }}>
+            <Figure src="/penangmedangif.gif" width="100%" />
+            <p style={para}>{TEXT.mirrored}</p>
+          </div>
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          <Figure src="/movement.jpg" width="100%" />
+          <p style={para}>{TEXT.independence}</p>
+        </Page>
+        <Page>
+          <Figure src="/col.gif" width="100%" />
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {/* one level line, no step */}
+          <Trio srcs={["/111.gif", "/222.gif", "/333.gif"]} width="26%" gap="11%" step={0} />
+          <p style={{ ...para, width: "63%" }}>{TEXT.british}</p>
+        </Page>
+        <Page>
+          <Figure src="/extract.jpg" width="100%" />
+          <p style={para}>{TEXT.enclaves}</p>
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          <div style={{ position: "relative", width: "100%", paddingTop: "56.25%" }}>
+            <FilmEmbed />
+          </div>
+          <p style={para}>{TEXT.erasure}</p>
+        </Page>
+        <Page>
+          {/* the silk squares, level in one line (no step), centred both ways
+              in the partition (auto margins top and bottom) */}
+          <Trio
+            srcs={["/silk1.jpg", "/silk2.jpg", "/silk3.jpg"]}
+            width="28%"
+            gap="6%"
+            step={0}
+            justify="center"
+            style={{ marginTop: "auto", marginBottom: "auto" }}
+          />
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {/* 333 (0.67) 26% and 777 (1.5) 58.5% are both ~39% tall; 777 drops
+              20% */}
+          <Pair gap="15.5%">
+            <Figure src="/333.jpg" width="26%" />
+            <Figure src="/777.jpg" width="58.5%" style={{ marginTop: "20%" }} />
+          </Pair>
+          <p style={para}>{TEXT.tracing}</p>
+        </Page>
+        <Page>
+          <Figure src="/medanpenang.jpg" width="100%" />
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {/* mirrored: the first is dropped. appa (0.62) 28% and the model
+              (1.32) 59% are both ~45% tall; appa drops 22% */}
+          <Pair gap="13%">
+            <Figure src="/appa.png" width="28%" style={{ marginTop: "22%" }} />
+            <Figure src="/modelmalacca.jpg" width="59%" />
+          </Pair>
+          <p style={para}>{TEXT.apparatus}</p>
+        </Page>
+        <Page>{null}</Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          <Figure src="/explode.jpg" width="100%" />
+          {/* the mods under explode, docked to the bottom so they finish level
+              with the tall shoptax / shophouse stack on the right */}
+          <Trio
+            srcs={["/mod1.png", "/mod3.png", "/mod2.png"]}
+            width="26%"
+            gap="11%"
+            step={12}
+            style={{ ...dock, paddingTop: "48px" }}
+          />
+        </Page>
+        <Page>
+          {/* stacked: shoptax (square) at 70% width, centred, then the shophouse
+              diagram across the partition under it, 48px apart (the gap used
+              between stacked pictures on Røyk) */}
+          <Figure src="/shoptax.jpg" width="70%" style={{ alignSelf: "center" }} />
+          <Figure src="/shophousediagram.jpg" width="100%" style={{ marginTop: "48px" }} />
+          <p style={para}>{TEXT.trade}</p>
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          <Figure src="/workshop.jpg" width="100%" />
+          <p style={para}>{TEXT.workshop}</p>
+        </Page>
+        <Page>
+          <Figure src="/frontrender.jpg" width="100%" />
+          <p style={para}>{TEXT.ornament}</p>
+        </Page>
+      </Spread>
+
+      {/* the plan on its own, centred at one partition's width (45%), like
+          the Omah plan */}
+      <Figure src="/malaccaplan.jpg" width="45%" style={{ alignSelf: "center" }} />
+
+      <Spread>
+        <Page>
+          <Figure src="/archive.gif" width="100%" />
+          <p style={para}>{TEXT.archive}</p>
+        </Page>
+        <Page>
+          {/* panelrender is portrait (0.56): at 45% it is ~80% tall */}
+          <Figure src="/panelrender.jpg" width="45%" />
+          <p style={{ ...para, width: "45%" }}>{TEXT.castings}</p>
+        </Page>
+      </Spread>
+    </Segments>
+  );
+}
+
+export default function ProjectProfile({ title }: { title: string }) {
   const phone = usePhone();
 
   const innerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +347,10 @@ export default function ProjectProfile({ title }: { title: string }) {
     ro.observe(innerRef.current);
     return () => ro.disconnect();
   }, []);
+
+  // Desktop uses the two-partition segments; the fixed-canvas JSX below now
+  // only renders the phone column.
+  if (!phone) return <MalaccaSegments title={title} />;
 
   return (
     <div
@@ -129,20 +430,13 @@ export default function ProjectProfile({ title }: { title: string }) {
           }}
         >
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 12px 0" }}>
-            The Malacca Strait, between the Indonesian and Malaysian archipelago,
-            constitutes a boundary produced through successive layers of mercantile
-            inscription. From these transactional ecologies emerged a diasporic
-            Peranakan identity, indigenous to the strait itself.
+            {TEXT.intro1}
           </p>
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 12px 0" }}>
-            Colonial and postcolonial borders severed these trade routes, while
-            persecution and cultural suppression fractured the community, leaving
-            its buildings abandoned and in decay.
+            {TEXT.intro2}
           </p>
           <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-            The proposal is a contemporary clan house that restores street-level
-            commerce and adds a selectively accessed archive of ancestral memory,
-            enabling the community to rewrite its own spatial history.
+            {TEXT.intro3}
           </p>
         </div>
 
@@ -203,10 +497,8 @@ export default function ProjectProfile({ title }: { title: string }) {
             zIndex: 5,
           }}
         >
-          Zheng He’s 15th century Silk Road voyages carried Chinese trade into
-          Southeast Asia. Merchants who stayed blended their traditions with the
-          local Malay, creating Peranakan culture: people born of the strait.
-        </p>
+            {TEXT.zhengHe}
+          </p>
 
         {/* text above col.gif — zero-height wrapper so it doesn't shift any image */}
         <div style={{ position: "relative", height: phone ? "auto" : 0 }}>
@@ -225,10 +517,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            The British took Malaya, the Dutch took Indonesia; a fluid corridor
-            was split between rival empires. The old informal movements across
-            the strait were overwritten, and the strait became a tool of divide
-            and conquer.
+            {TEXT.british}
           </p>
         </div>
 
@@ -267,9 +556,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Peranakan enclaves gathered in Penang and Medan: twin cities across
-            the water, split by rival colonial hands and absorbed into the same
-            extractive machine.
+            {TEXT.enclaves}
           </p>
         </div>
 
@@ -308,9 +595,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Then independence came, and with redefining national identity,
-            Malaysia chose preservation, while Indonesia systematically erased
-            Chinese language and culture.
+            {TEXT.independence}
           </p>
         </div>
 
@@ -384,67 +669,7 @@ export default function ProjectProfile({ title }: { title: string }) {
             left: phone ? "auto" : "-450px",
           }}
         >
-          {playing ? (
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3`}
-              title="Waters of Unfinished Maps: Reinscribing the Malacca Strait"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                border: "none",
-              }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          ) : (
-            <button
-              onClick={() => setPlaying(true)}
-              aria-label="Play film"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                border: "none",
-                padding: 0,
-                color: "#333",
-                cursor: "crosshair",
-                backgroundImage: `url(https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg)`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.55)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderTop: "12px solid transparent",
-                    borderBottom: "12px solid transparent",
-                    borderLeft: "20px solid white",
-                    marginLeft: "4px",
-                  }}
-                />
-              </span>
-            </button>
-          )}
+          <FilmEmbed />
         </div>
 
         {/* text to the right of the film — zero-height wrapper so no image shifts */}
@@ -464,9 +689,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Erasure follows rewriting, especially when someone else holds the
-            pen. As culture retreats into the home, the altar table becomes the
-            last reminder of belonging.
+            {TEXT.erasure}
           </p>
         </div>
 
@@ -505,9 +728,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            When tracing enclaves through surviving buildings and family
-            accounts, the two cities diverge. In Penang, heritage sits inside the
-            city grid. In Medan, they are pushed to the margins.
+            {TEXT.tracing}
           </p>
         </div>
 
@@ -614,10 +835,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            an apparatus reinterpreting the peranakan ancestral altar. a colonial
-            map lies on the lower tier over a lightbox, memories are drawn on the
-            surface. lived experience is layered over fixed colonial cartography
-            and the two read as one.
+            {TEXT.apparatus}
           </p>
         </div>
 
@@ -656,9 +874,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            the malacca strait once mirrored a shared identity between penang and
-            medan. the project seeks to mend this fracture and return agency to
-            peranakan communities on both shores.
+            {TEXT.mirrored}
           </p>
         </div>
 
@@ -697,9 +913,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Trade defined the rhythms, hierarchies, and social fabric of
-            Peranakan life, producing an architecture where livelihood and
-            identity were structurally bound.
+            {TEXT.trade}
           </p>
         </div>
 
@@ -800,10 +1014,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Peranakan identity lived in ornament laid over colonial buildings,
-            impermanent and easily stripped away. What happens when ornament
-            becomes load-bearing, and culture is carved into the structure
-            instead of painted onto it?
+            {TEXT.ornament}
           </p>
         </div>
 
@@ -860,9 +1071,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Synonymous to the apparatus, the workshop is a site of active
-            re-inscription, a space to protect cultural arts made by and for the
-            community.
+            {TEXT.workshop}
           </p>
         </div>
 
@@ -901,10 +1110,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            The archive lines the clan house's inner walls, holding ancestral
-            tablets and family artefacts that anchor the community's shared
-            identity. Carefully placed windows veil the facade, so outsiders can
-            glimpse what lies within but never fully enter.
+            {TEXT.archive}
           </p>
 
           {/* panelrender.jpg + its text — under the archive gif, in the empty
@@ -941,8 +1147,7 @@ export default function ProjectProfile({ title }: { title: string }) {
               zIndex: 5,
             }}
           >
-            Detachable castings with family trees are placed on the inside of the
-            archive.
+            {TEXT.castings}
           </p>
         </div>
       </div>

@@ -14,6 +14,7 @@ import { asset } from "./lib/asset";
 import { BG_COLOR } from "./lib/theme";
 import { usePhone } from "./lib/usePhone";
 import LoadingScreen from "./components/LoadingScreen";
+import ImageViewer, { collectImages, toViewerImage, type ViewerImage } from "./components/ImageViewer";
 
 const CUBE_SIZE = 11;
 const UNFOLD_MULTIPLIER = 1.4;
@@ -576,6 +577,19 @@ export default function App() {
     projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
+  // Click-to-enlarge: one delegated handler on the project page opens any
+  // picture in the viewer, with the page's other pictures to step through.
+  const [viewer, setViewer] = useState<{ images: ViewerImage[]; index: number } | null>(null);
+  const openViewer = (e: React.MouseEvent) => {
+    const root = projectPageRef.current;
+    const img = (e.target as HTMLElement).closest("img");
+    if (!root || !img) return;
+    const imgs = collectImages(root);
+    const index = imgs.indexOf(img);
+    if (index === -1) return;
+    setViewer({ images: imgs.map(toViewerImage), index });
+  };
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -775,6 +789,8 @@ export default function App() {
         <>
           <aWeb.div
             ref={projectPageRef}
+            className="project-page"
+            onClick={openViewer}
           style={{
             ...popupSpring,
             position: "absolute",
@@ -905,6 +921,15 @@ export default function App() {
           </button>
         </div>
         </>
+      )}
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.images}
+          index={viewer.index}
+          onIndex={(index) => setViewer({ ...viewer, index })}
+          onClose={() => setViewer(null)}
+        />
       )}
 
       {/* CV Page */}
