@@ -141,7 +141,7 @@ export default function ImageViewer({
           style={{
             display: "block",
             maxWidth: "100%",
-            maxHeight: `calc(100vh - ${phone ? 112 : 128}px - ${(current.caption ? 24 : 0) + (full ? 0 : 24)}px)`,
+            maxHeight: `calc(100vh - ${phone ? 112 : 128}px - ${current.caption ? 24 : 0}px)`,
             width: "auto",
             height: "auto",
             objectFit: "contain",
@@ -151,11 +151,6 @@ export default function ImageViewer({
             animation: "viewer-in 180ms ease-out",
           }}
         />
-        {!full && current.preview !== current.src && (
-          <span style={{ ...META_TEXT, color: "rgba(255, 255, 255, 0.6)", marginTop: "8px" }}>
-            loading full resolution…
-          </span>
-        )}
         {current.caption && (
           <figcaption
             onClick={(e) => e.stopPropagation()}

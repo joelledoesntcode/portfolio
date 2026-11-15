@@ -23,11 +23,12 @@ const LINE_COLOR = "#888888";
 const EDGE_COLOR = "#8c8c8c";
 // in screen pixels (WebGL's own lines are always 1px, so these use drei's Line)
 const EDGE_WIDTH = 1.6;
+const DASH_SIZE = CUBE_SIZE * 0.06;
+const GAP_SIZE = CUBE_SIZE * 0.035;
 const ACCENT_RED = "#8d0104";
 const LINE_OPACITY = 0.5; // the cube edges, folded and unfolded
-// The cube faces' paper: a cool off-white, a step off the white page so the
-// cube reads as an object sitting on it.
-const FACE_COLOR = "#fffaf0";
+// The cube faces: flat white, the same as the page.
+const FACE_COLOR = BG_COLOR;
 
 type Project = {
   title: string;
@@ -98,6 +99,9 @@ function EdgeLines({ geometry, opacity }: { geometry: THREE.BufferGeometry; opac
       ref={ref as never}
       points={points}
       segments
+      dashed
+      dashSize={DASH_SIZE}
+      gapSize={GAP_SIZE}
       color={EDGE_COLOR}
       lineWidth={EDGE_WIDTH}
       transparent
@@ -940,7 +944,11 @@ export default function App() {
             backgroundColor: BG_COLOR,
             zIndex: 30,
             overflowY: "auto",
-            padding: "60px 60px 60px 60px",
+            // on phones, extra room at the foot so the last lines clear the
+            // browser toolbar and home indicator (100vh runs under them)
+            padding: phone
+              ? "60px 60px calc(96px + env(safe-area-inset-bottom, 0px)) 60px"
+              : "60px 60px 60px 60px",
             boxSizing: "border-box",
           }}
         >
@@ -988,7 +996,11 @@ export default function App() {
             backgroundColor: BG_COLOR,
             zIndex: 30,
             overflowY: "auto",
-            padding: "60px 60px 60px 60px",
+            // on phones, extra room at the foot so the last lines clear the
+            // browser toolbar and home indicator (100vh runs under them)
+            padding: phone
+              ? "60px 60px calc(96px + env(safe-area-inset-bottom, 0px)) 60px"
+              : "60px 60px 60px 60px",
             boxSizing: "border-box",
           }}
         >
