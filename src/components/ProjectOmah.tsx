@@ -7,6 +7,8 @@ import CollageCanvas, {
   type BlockSpec,
 } from "./CollageCanvas";
 import { META_TEXT } from "../lib/theme";
+import { usePhone } from "../lib/usePhone";
+import { Figure, Page, Pair, Segments, Spread, TitleBlock } from "./Segments";
 
 type Props = {
   title: string;
@@ -59,7 +61,169 @@ const captionColumn = (phone: boolean): React.CSSProperties => ({
   boxSizing: "border-box",
 });
 
+// The intro, shared by the desktop and phone layouts.
+const INTRO_TEXT = [
+  "In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. My proposal envisions a cultural hub to revitalize traditional trade with a sustainable model.",
+  "It integrates competition and reward through community building to engage participants, fostering motivation for achievement.",
+];
+
+// The three villager quotes, shared by the desktop and phone layouts.
+const QUOTES = {
+  income: {
+    text: "‘‘I work for all our income and my husband takes the money and gambles’’",
+    by: "- Working mother of 2",
+  },
+  school: {
+    text: "‘‘I stopped school to sell stuff and ask tourists for money, so my parents could eat’’",
+    by: "- 8 year old girl",
+  },
+  farming: {
+    text: "‘‘Farming isn’t sustainable anymore, I rely 100% on my wife who weaves cloth for tourists’’",
+    by: "- A father / head of family",
+  },
+};
+
+function Quote({ q }: { q: { text: string; by: string } }) {
+  return (
+    <>
+      <span style={{ display: "block", fontStyle: "italic", marginBottom: "4px" }}>{q.text}</span>
+      <span style={{ display: "block" }}>{q.by}</span>
+    </>
+  );
+}
+
+// --- desktop: two-partition segments (see Segments.tsx) -----------------------
+//
+// Same design language as Pilgrim, Røyk and Peter Tatchell. Pair widths are
+// worked out from the images' aspect ratios (noted inline) so the two come out
+// the same height, and one is dropped by about half that height to step.
+//   1. left: title block, then the Bale Tani pair (ver1, ver2 dropped) with
+//      the gridshell captions, docked to the bottom.  right: omah3.gif.
+//   2. left: omah1.gif, the mother's quote under it.  right: the two weaving
+//      images, at the top, each with its quote under it.
+//   3. left: the five diaomah stages as a bento.  right: the plan.
+function OmahSegments({ title, images }: { title: string; images: CollageImage[] }) {
+  // look images up by file so the layout doesn't depend on array order
+  const img = (name: string) =>
+    (images.find((im) => im.src === name) ?? { src: name }).src;
+
+  return (
+    <Segments>
+      <Spread>
+        <Page>
+          <TitleBlock
+            title={title}
+            meta={
+              <>
+                “house of dreams”
+                <br />
+                Rembitan Village, Lombok, Indonesia
+                <br />
+                Self-initiated project for Titian Foundation (2024)
+              </>
+            }
+          >
+            {INTRO_TEXT.map((para, i) => (
+              <p
+                key={i}
+                style={{ ...line, textAlign: "justify", margin: i === 0 ? "14px 0 16px 0" : 0 }}
+              >
+                {para}
+              </p>
+            ))}
+          </TitleBlock>
+          {/* under the project text, docked to the bottom like the Pilgrim
+              culverts. ver1 (1.59) 38% and ver2 (1.92) 45.9% are both ~24%
+              tall; ver2 drops 12% to step */}
+          <Pair style={{ marginTop: "auto", paddingTop: "120px" }}>
+            <Figure
+              src={img("/omah_ver1.png")}
+              width="38%"
+              caption={`${BALE_A} ${BALE_B}`}
+            />
+            <Figure
+              src={img("/omah_ver2.png")}
+              width="45.9%"
+              style={{ marginTop: "12%" }}
+              caption={
+                <>
+                  <span style={{ display: "block", marginBottom: "8px" }}>{GRIDSHELL}</span>
+                  <span style={{ display: "block" }}>
+                    {RESEARCH_A} {RESEARCH_B}
+                  </span>
+                </>
+              }
+            />
+          </Pair>
+        </Page>
+        <Page>
+          <Figure src={img("/omah3.gif?v=2")} width="100%" />
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          <Figure src={img("/omah1.gif")} width="100%" caption={<Quote q={QUOTES.income} />} />
+        </Page>
+        <Page>
+          {/* weave1 (1.45) 48% and weave2 (0.73) 24.2% are both ~33% tall,
+              top-aligned (no stagger), with no gap between */}
+          {/* at the top of the partition, level with omah1.gif */}
+          <Pair gap="0" style={{ justifyContent: "flex-end" }}>
+            <Figure
+              src={img("/omah_weave1.png")}
+              width="48%"
+              caption={<Quote q={QUOTES.school} />}
+            />
+            <Figure
+              src={img("/omah_weave2.PNG")}
+              width="24.2%"
+              caption={<Quote q={QUOTES.farming} />}
+            />
+          </Pair>
+        </Page>
+      </Spread>
+
+      {/* left: the five stages of the diaomah diagram as a bento, split out
+          of the original vertical strip (public/diaomah_1-5.jpg, each cropped
+          to the same 406x170 frame with the ground line at the same height).
+          All five are the same size: two per row, with stage 5 centred on the
+          last row (a 4-column grid where each panel spans 2).
+          right: the plan. */}
+      <Spread>
+        <Page>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "16px",
+              marginTop: "120px",
+            }}
+          >
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Figure
+                key={n}
+                src={`/diaomah_${n}.jpg`}
+                width="100%"
+                style={{ gridColumn: n === 5 ? "2 / span 2" : "span 2" }}
+              />
+            ))}
+          </div>
+        </Page>
+        <Page>
+          <Figure src={img("/omah_plan.png")} width="100%" />
+        </Page>
+      </Spread>
+    </Segments>
+  );
+}
+
 export default function ProjectOmah({ title, images }: Props) {
+  const phone = usePhone();
+  if (!phone) {
+    return <OmahSegments title={title} images={images} />;
+  }
+
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
       {(phone) => (
@@ -87,36 +251,29 @@ export default function ProjectOmah({ title, images }: Props) {
           {/* "In Rembitan..." split out of the title block, moved 10 right and 5
               down from its original column position. */}
           <Block phone={phone} spec={INTRO} style={textColumn(phone)}>
-            <p style={{ ...line, textAlign: "justify", margin: "0 0 16px 0" }}>
-              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. My proposal envisions a cultural hub to revitalize traditional trade with a sustainable model.
-            </p>
-            <p style={{ ...line, textAlign: "justify" }}>
-              It integrates competition and reward through community building to engage participants, fostering motivation for achievement.
-            </p>
+            {INTRO_TEXT.map((para, i) => (
+              <p key={i} style={{ ...line, textAlign: "justify", margin: i === 0 ? "0 0 16px 0" : 0 }}>
+                {para}
+              </p>
+            ))}
           </Block>
 
           {/* Quote above omah_weave1 (cell top 96vh). */}
           <Block phone={phone} spec={QUOTE_INCOME} style={captionColumn(phone)}>
-            <p style={italic}>
-              ‘‘I work for all our income and my husband takes the money and gambles’’
-            </p>
-            <p style={line}>- Working mother of 2</p>
+            <p style={italic}>{QUOTES.income.text}</p>
+            <p style={line}>{QUOTES.income.by}</p>
           </Block>
 
           {/* Quote below omah_weave1 (cell bottom 118vh). */}
           <Block phone={phone} spec={QUOTE_SCHOOL} style={captionColumn(phone)}>
-            <p style={italic}>
-              ‘‘I stopped school to sell stuff and ask tourists for money, so my parents could eat’’
-            </p>
-            <p style={line}>- 8 year old girl</p>
+            <p style={italic}>{QUOTES.school.text}</p>
+            <p style={line}>{QUOTES.school.by}</p>
           </Block>
 
           {/* Quote under omah_weave2 (cell bottom 131vh). */}
           <Block phone={phone} spec={QUOTE_FARMING} style={captionColumn(phone)}>
-            <p style={italic}>
-              ‘‘Farming isn’t sustainable anymore, I rely 100% on my wife who weaves cloth for tourists’’
-            </p>
-            <p style={line}>- A father / head of family</p>
+            <p style={italic}>{QUOTES.farming.text}</p>
+            <p style={line}>{QUOTES.farming.by}</p>
           </Block>
 
           {phone ? (

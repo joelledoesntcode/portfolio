@@ -6,6 +6,8 @@ import CollageCanvas, {
   type BlockSpec,
 } from "./CollageCanvas";
 import { META_TEXT } from "../lib/theme";
+import { Figure, Page, Pair, Segments, Spread, TitleBlock, line } from "./Segments";
+import { usePhone } from "../lib/usePhone";
 
 type Props = {
   title: string;
@@ -67,15 +69,159 @@ function phoneSplit(text: string, idx: number) {
 
 const PROPOSAL: BlockSpec = { top: 0, left: 0, width: 19.5, phoneOrder: 27 };
 
-const line: React.CSSProperties = { fontSize: "0.7rem", fontWeight: 300, margin: 0 };
-
 /** The short captions sit on a narrower inset than the title column. */
 const captionColumn = (phone: boolean): React.CSSProperties => ({
   padding: phone ? 0 : "0 24px 0 12px",
   boxSizing: "border-box",
 });
 
+// --- desktop: two-partition segments (see Segments.tsx) -------------------
+
+// 1.PNG / 2.PNG run larger: 47% each, which leaves a 6% gap in the partition
+const PAIR_WIDTH_LARGE = "47%";
+const PAIR_GAP_LARGE = "6%";
+
+// 3.png / 4.png run smaller: 34% each with the usual 16% gap
+const PAIR_WIDTH_SMALL = "34%";
+
+function PilgrimSpreads({
+  title,
+  introText,
+  earthworkText,
+  images,
+}: {
+  title: string;
+  introText: string;
+  earthworkText: string;
+  images: CollageImage[];
+}) {
+  // look images up by file so the layout doesn't depend on array order
+  const img = (name: string) =>
+    images.find((im) => im.src === name) ?? { src: name, caption: "" };
+  const culv1 = img("/culv1.jpg");
+  const culv2 = img("/culv2.jpg");
+
+  return (
+    <Segments>
+      {/* segment 1 — left: title, location + competition, description, then
+          the culverts docked bottom-right.
+          right: antecollage, with the earthwork text under it. */}
+      <Spread>
+        <Page>
+          <TitleBlock
+            title={title}
+            meta={
+              <>
+                London, UK
+                <br />
+                Antepavilion competition entry (2024)
+              </>
+            }
+          >
+            <p
+              style={{ ...line, textAlign: "justify" }}
+              dangerouslySetInnerHTML={{ __html: introText }}
+            />
+          </TitleBlock>
+          {/* pushed to the right edge. The culverts are 25.4% and 32.6% of the
+              partition (widths follow their aspect ratios, 0.644 and 0.826, so
+              both come out the same height); the block is sized to hold them
+              plus the gap between, so the gap can grow without shrinking them */}
+          <div
+            style={{
+              marginTop: "auto",
+              paddingTop: "120px", // minimum space under the project text
+              alignSelf: "flex-end",
+              width: "74%",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "21.62%" }}>
+              <Figure src={culv1.src} width="34.32%" caption={culv1.caption} />
+              {/* dropped down so the pair steps diagonally, top-left to
+                  bottom-right (a % margin scales with the block's width) */}
+              <Figure
+                src={culv2.src}
+                width="44.05%"
+                caption={culv2.caption}
+                style={{ marginTop: "25.14%" }}
+              />
+            </div>
+          </div>
+        </Page>
+        <Page>
+          <Figure src={img("/antecollage.png").src} width="100%" />
+          {earthworkText && (
+            <p
+              style={{ ...line, textAlign: "justify", marginTop: "8px" }}
+              dangerouslySetInnerHTML={{ __html: earthworkText }}
+            />
+          )}
+        </Page>
+      </Spread>
+
+      {/* segment 2 — left: mainante. right: 1.PNG and 2.PNG side by side. */}
+      <Spread>
+        <Page>
+          <Figure
+            src={img("/mainante.png").src}
+            width="100%"
+            caption={
+              <>
+                Tower: pays homage to historic Roman trusses.
+                <br />
+                Ballasts: embodies unearthing, honours cycles of creation and demolition.
+              </>
+            }
+          />
+        </Page>
+        <Page>
+          {/* docked to the bottom of the partition (auto top margin in the
+              page's flex column) */}
+          <Pair gap={PAIR_GAP_LARGE} style={{ marginTop: "auto" }}>
+            <Figure src={img("/1.PNG").src} width={PAIR_WIDTH_LARGE} caption="Pull for refuge..." />
+            {/* landscape (1.44): 47% wide is ~33% tall, so a 16% drop starts it
+                about halfway down 1.PNG, the same step as the culverts */}
+            <Figure
+              src={img("/2.PNG").src}
+              width={PAIR_WIDTH_LARGE}
+              caption="...Release for repose"
+              style={{ marginTop: "16%" }}
+            />
+          </Pair>
+        </Page>
+      </Spread>
+
+      {/* segment 3 — mirrored: left: 3.png and 4.png side by side.
+          right: backrrender. */}
+      <Spread>
+        <Page>
+          <Pair>
+            {/* stepped the other way from the pairs above: 3.png is dropped and
+                4.png sits at the top. Portrait (~0.69): 34% wide is ~49% tall,
+                so a 24% drop puts 3.png's top about halfway down 4.png */}
+            <Figure
+              src={img("/3.png").src}
+              width={PAIR_WIDTH_SMALL}
+              caption="Leave things behind..."
+              style={{ marginTop: "24%" }}
+            />
+            <Figure
+              src={img("/4.png").src}
+              width={PAIR_WIDTH_SMALL}
+              caption="...For the next pilgrim to find"
+            />
+          </Pair>
+        </Page>
+        <Page>
+          <Figure src={img("/backrrender.png").src} width="100%" />
+        </Page>
+      </Spread>
+    </Segments>
+  );
+}
+
 export default function ProjectPilgrim({ title, description, images }: Props) {
+  const phone = usePhone();
   // Split the description so everything from "The Earthwork theme" onward renders
   // as its own block, pushed down from the intro paragraphs above it.
   const EARTHWORK_MARKER = "The Earthwork theme";
@@ -89,6 +235,17 @@ export default function ProjectPilgrim({ title, description, images }: Props) {
   const PROPOSAL_MARKER = "My proposal pays tribute";
   const proposalIdx = introText.indexOf(PROPOSAL_MARKER);
   const splitIntro = phoneSplit(introText, proposalIdx);
+
+  if (!phone) {
+    return (
+      <PilgrimSpreads
+        title={title}
+        introText={introText}
+        earthworkText={earthworkText}
+        images={images}
+      />
+    );
+  }
 
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>

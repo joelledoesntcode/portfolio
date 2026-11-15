@@ -12,3 +12,8 @@ html, body, #root {
 canvas {
   display: block;
 }
+
+/* Project pictures open in the image viewer on click. */
+.project-page img:not(button img):not(a img) {
+  cursor: zoom-in;
+}

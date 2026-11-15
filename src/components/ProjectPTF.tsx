@@ -6,6 +6,8 @@ import CollageCanvas, {
   type BlockSpec,
 } from "./CollageCanvas";
 import { META_TEXT } from "../lib/theme";
+import { usePhone } from "../lib/usePhone";
+import { Figure, Page, Pair, Segments, Spread, TitleBlock, line } from "./Segments";
 
 type Props = {
   title: string;
@@ -48,7 +50,180 @@ const CANVAS_VH = MAX_BOTTOM + TOP_MARGIN;
 // page width.
 const TITLE: BlockSpec = { top: 0, left: 0, width: 19.5 };
 
+// Paragraphs that sit under particular pictures, shared by both layouts.
+const PTF_TEXT = {
+  site: "the site borders the king’s arms, a pub to be retrofitted. preserving its historical facade is vital, having become a recent queer safe space.",
+  sketches: "initial sketches show flowing forms inspired by the pub’s features and nearby arches, with greenery framed by curves, drawing from concepts above.",
+  stone: "stone, selected for its carbon emission reduction potential, symbolises and honours the unwavering strength of the lgbtqia+ protests for a better world.",
+  retrofit: "the historic victorian pub, valued for its facade and community significance, underwent internal retrofit to improve thermal performance and ventilation.",
+  enerphit: "aligned with riba 2030 climate challenge and enerphit principles, it features internal insulation, avoiding external alterations.",
+  collage: "protests were done through visual media - i honour this by incorporating colour and art.",
+};
+
+// --- desktop: two-partition segments (see Segments.tsx) -----------------------
+//
+// Same design language as Pilgrim and Røyk: each segment pairs one large
+// picture with a staggered pair, the pair switching sides every segment, and
+// every caption set 8px under its picture. Pair widths are worked out from the
+// images' aspect ratios (noted inline) so the two come out the same height,
+// and the second is dropped by about half that height to step diagonally
+// (in the mirrored segment the first is dropped instead).
+//   1. left: title block, then site plan + King's Arms docked bottom-right.
+//      right: exhibition space.
+//   2. left: site model.  right: King's Arms fabric pair, docked bottom.
+//   3. mirrored. left: sketches + collage.  right: section.
+//   4. left: construction detail.  right: aerial view + office, docked bottom.
+//   5. left: visitor-journey diagram.  right: the monument.
+//   6. left: ground floor plan.  right: stone diagram, docked bottom.
+function PTFSegments({
+  title,
+  description,
+  images,
+}: {
+  title: string;
+  description: string;
+  images: CollageImage[];
+}) {
+  // look images up by file so the layout doesn't depend on array order
+  const img = (name: string) =>
+    images.find((im) => im.src === name) ?? { src: name, caption: "" };
+  // a plain function, not a component defined in render, so React keeps the
+  // same <figure> elements across re-renders
+  // drawings on white get the thin faded outline so their edges read
+  const OUTLINED = new Set(["/technical.jpg", "/ptfgf.png", "/bigsiteptf.png", "/section.png"]);
+  const pic = (name: string, width: string, style?: React.CSSProperties, text?: string[]) => {
+    const im = img(name);
+    return (
+      <Figure
+        src={im.src}
+        width={width}
+        caption={
+          text ? (
+            <>
+              {im.caption}
+              {text.map((t, i) => (
+                <span key={i} style={{ display: "block", textAlign: "justify", marginTop: "8px" }}>
+                  {t}
+                </span>
+              ))}
+            </>
+          ) : (
+            im.caption
+          )
+        }
+        style={style}
+        outline={OUTLINED.has(name)}
+      />
+    );
+  };
+  const dock: React.CSSProperties = { marginTop: "auto" };
+
+  return (
+    <Segments>
+      <Spread>
+        <Page>
+          <TitleBlock
+            title={title}
+            meta={
+              <>
+                Manchester, UK
+                <br />
+                Undergraduate Project Year 3
+              </>
+            }
+          >
+            <p
+              style={{ ...line, textAlign: "justify" }}
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          </TitleBlock>
+          {/* docked bottom-right like the Pilgrim culverts. In partition terms:
+              site plan (1.13) 40% and King's Arms (0.74) 26.2%, both ~35% tall,
+              16% gap = an 82.2% block; King's Arms drops ~18% to step */}
+          <div
+            style={{ ...dock, paddingTop: "120px", alignSelf: "flex-end", width: "82.2%" }}
+          >
+            <Pair gap="19.46%">
+              {pic("/bigsiteptf.png", "48.66%", undefined, [PTF_TEXT.site])}
+              {pic("/kingsarms.png", "31.87%", { marginTop: "21.5%" })}
+            </Pair>
+          </div>
+        </Page>
+        <Page>
+          {pic("/exhi.png", "100%")}
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {pic("/ptfmodel.PNG", "100%")}
+        </Page>
+        <Page>
+          {/* both 0.75: 34% wide is ~45% tall; the second drops 22% */}
+          <Pair style={dock}>
+            {pic("/kingsarms2.png", "34%")}
+            {pic("/kingsarms3.png", "34%", { marginTop: "22%" })}
+          </Pair>
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {/* mirrored: the first is dropped. sketches (0.51) 22% and the
+              collage (1.41) 60.4% are both ~43% tall; the drop is 21% */}
+          <Pair gap="17.6%">
+            {pic("/sketchcompilation2.png", "22%", { marginTop: "21%" }, [PTF_TEXT.sketches])}
+            {pic("/ptfcollage.png", "60.4%", undefined, [PTF_TEXT.collage])}
+          </Pair>
+        </Page>
+        <Page>
+          {pic("/section.png", "100%")}
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {pic("/technical.jpg", "100%", undefined, [PTF_TEXT.retrofit, PTF_TEXT.enerphit])}
+        </Page>
+        <Page>
+          {/* aerial (1.46) 42.6% and office (1.76) 51.4% are both ~29% tall,
+              with a narrower 6% gap to fit; the office drops 15% */}
+          <Pair gap="6%" style={dock}>
+            {pic("/highlevel.png", "42.6%")}
+            {pic("/officenew.png", "51.4%", { marginTop: "15%" })}
+          </Pair>
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {/* docked to the bottom, level with the monument render's bottom */}
+          {pic("/diaptf.jpg", "100%", dock)}
+        </Page>
+        <Page>
+          {pic("/roofrender.png", "100%")}
+        </Page>
+      </Spread>
+
+      <Spread>
+        <Page>
+          {pic("/ptfgf.png", "100%")}
+        </Page>
+        <Page>
+          {/* stone diagram (0.53) at 34%, docked to the bottom */}
+          {pic("/joelle_warsono_portfolio_Page_13.jpg", "34%", dock, [PTF_TEXT.stone])}
+        </Page>
+      </Spread>
+    </Segments>
+  );
+}
+
 export default function ProjectPTF({ title, description, images }: Props) {
+  const phone = usePhone();
+  if (!phone) {
+    return <PTFSegments title={title} description={description} images={images} />;
+  }
+
   return (
     <CollageCanvas heightVh={CANVAS_VH} cells={CELLS} images={images}>
       {(phone) => (
@@ -87,10 +262,7 @@ export default function ProjectPTF({ title, description, images }: Props) {
               marginLeft: phone ? 0 : "calc(-1 * min(23.57vh, 359.6px))",
             }}
           >
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-              the site borders the king’s arms, a pub to be retrofitted. preserving its
-              historical facade is vital, having become a recent queer safe space.
-            </p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>{PTF_TEXT.site}</p>
           </Block>
 
           {/* Caption under sketchcompilation2, same approach: painted height =
@@ -106,10 +278,7 @@ export default function ProjectPTF({ title, description, images }: Props) {
               marginLeft: phone ? 0 : "calc(-1 * min(11.12vh, 253.8px))",
             }}
           >
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-              initial sketches show flowing forms inspired by the pub’s features and
-              nearby arches, with greenery framed by curves, drawing from concepts above.
-            </p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>{PTF_TEXT.sketches}</p>
           </Block>
 
           {/* Caption under the stone diagram (Page_13), same approach: painted
@@ -124,11 +293,7 @@ export default function ProjectPTF({ title, description, images }: Props) {
               marginLeft: phone ? 0 : "calc(-1 * min(9.99vh, 195.2px))",
             }}
           >
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-              stone, selected for its carbon emission reduction potential, symbolises
-              and honours the unwavering strength of the lgbtqia+ protests for a
-              better world.
-            </p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>{PTF_TEXT.stone}</p>
           </Block>
 
           {/* Caption under technical.jpg, same approach: painted height =
@@ -143,15 +308,8 @@ export default function ProjectPTF({ title, description, images }: Props) {
               marginLeft: phone ? 0 : "calc(-1 * min(46vh, 1014px))",
             }}
           >
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 10px 0" }}>
-              the historic victorian pub, valued for its facade and community
-              significance, underwent internal retrofit to improve thermal
-              performance and ventilation.
-            </p>
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-              aligned with riba 2030 climate challenge and enerphit principles, it
-              features internal insulation, avoiding external alterations.
-            </p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: "0 0 10px 0" }}>{PTF_TEXT.retrofit}</p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>{PTF_TEXT.enerphit}</p>
           </Block>
 
           {/* Caption under ptfcollage, same approach: painted height =
@@ -165,10 +323,7 @@ export default function ProjectPTF({ title, description, images }: Props) {
               marginLeft: phone ? 0 : "calc(-1 * min(21.22vh, 260.3px))",
             }}
           >
-            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>
-              protests were done through visual media - i honour this by
-              incorporating colour and art.
-            </p>
+            <p style={{ fontSize: "0.7rem", fontWeight: 300, textAlign: "justify", margin: 0 }}>{PTF_TEXT.collage}</p>
           </Block>
 
           {/* Image cells, placed against the page inset by the 40px gutters. */}

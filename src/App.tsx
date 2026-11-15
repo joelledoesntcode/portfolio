@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { a, useSpring } from "@react-spring/three";
 import { a as aWeb, useSpring as useWebSpring } from "@react-spring/web";
-import { OrbitControls, useTexture, Text } from "@react-three/drei";
+import { OrbitControls, useTexture, Text, Line } from "@react-three/drei";
 import * as THREE from "three";
 import ProjectProfile from "./components/ProjectProfile";
 import ProjectPilgrim from "./components/ProjectPilgrim";
@@ -14,15 +14,20 @@ import { asset } from "./lib/asset";
 import { BG_COLOR } from "./lib/theme";
 import { usePhone } from "./lib/usePhone";
 import LoadingScreen from "./components/LoadingScreen";
+import ImageViewer, { collectImages, toViewerImage, type ViewerImage } from "./components/ImageViewer";
 
 const CUBE_SIZE = 11;
 const UNFOLD_MULTIPLIER = 1.4;
-const DASH_SIZE = CUBE_SIZE * 0.06;
-const GAP_SIZE = CUBE_SIZE * 0.035;
 const LINE_COLOR = "#888888";
-const EDGE_COLOR = "#000000";
+// a subtle grey hairline round the cube and each unfolded face
+const EDGE_COLOR = "#8c8c8c";
+// in screen pixels (WebGL's own lines are always 1px, so these use drei's Line)
+const EDGE_WIDTH = 1.6;
 const ACCENT_RED = "#8d0104";
-const LINE_OPACITY = 1;
+const LINE_OPACITY = 0.5; // the cube edges, folded and unfolded
+// The cube faces' paper: a cool off-white, a step off the white page so the
+// cube reads as an object sitting on it.
+const FACE_COLOR = "#fffaf0";
 
 type Project = {
   title: string;
@@ -67,48 +72,44 @@ type FaceProps = {
   entrance: any;
 };
 
-// --- helper for dashed lines ---
-function setDashDistances(geom: THREE.BufferGeometry) {
-  const pos = geom.attributes.position as THREE.BufferAttribute;
-  const count = pos.count;
-  const distances = new Float32Array(count);
-  for (let i = 0; i < count; i += 2) {
-    const sx = pos.getX(i),
-      sy = pos.getY(i),
-      sz = pos.getZ(i);
-    const ex = pos.getX(i + 1),
-      ey = pos.getY(i + 1),
-      ez = pos.getZ(i + 1);
-    const dx = ex - sx,
-      dy = ey - sy,
-      dz = ez - sz;
-    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    distances[i] = 0;
-    distances[i + 1] = len;
-  }
-  geom.setAttribute("lineDistance", new THREE.BufferAttribute(distances, 1));
+// --- edge lines, drawn at EDGE_WIDTH px. `opacity` is a react-spring value,
+// read every frame into the material so the fade doesn't re-render React. ---
+type SpringNumber = { get: () => number };
+function EdgeLines({ geometry, opacity }: { geometry: THREE.BufferGeometry; opacity: SpringNumber }) {
+  const points = useMemo(() => {
+    const edges = new THREE.EdgesGeometry(geometry);
+    const pos = edges.attributes.position as THREE.BufferAttribute;
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < pos.count; i++) pts.push(new THREE.Vector3().fromBufferAttribute(pos, i));
+    edges.dispose();
+    return pts;
+  }, [geometry]);
+  const ref = useRef<{ material: THREE.Material } | null>(null);
+  useFrame(() => {
+    const m = ref.current?.material;
+    if (m) {
+      const o = opacity.get();
+      m.opacity = o;
+      m.visible = o > 0.001;
+    }
+  });
+  return (
+    <Line
+      ref={ref as never}
+      points={points}
+      segments
+      color={EDGE_COLOR}
+      lineWidth={EDGE_WIDTH}
+      transparent
+      opacity={opacity.get()}
+    />
+  );
 }
 
-// --- dotted outline of one face ---
-function FaceDottedEdges({ size, opacity }: { size: number; opacity: number }) {
-  const geom = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.PlaneGeometry(size, size)),
-    [size]
-  );
-  useEffect(() => {
-    setDashDistances(geom);
-  }, [geom]);
-  return (
-    <a.lineSegments geometry={geom}>
-      <a.lineDashedMaterial
-        color={EDGE_COLOR}
-        dashSize={DASH_SIZE}
-        gapSize={GAP_SIZE}
-        transparent
-        opacity={opacity}
-      />
-    </a.lineSegments>
-  );
+// --- outline of one face ---
+function FaceDottedEdges({ size, opacity }: { size: number; opacity: SpringNumber }) {
+  const geom = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
+  return <EdgeLines geometry={geom} opacity={opacity} />;
 }
 
 // --- one cube face ---
@@ -128,13 +129,6 @@ function Face({
   entrance,
 }: FaceProps) {
   const [hovered, setHovered] = useState(false);
-
-  // The miscellaneous and Malacca Strait tiles have no cover image and show
-  // only their text + dotted edges, so nothing on them may paint — neither the
-  // blank panel nor the backing behind it.
-  const blankTile =
-    project.title === "miscellaneous" ||
-    project.title.startsWith("Waters of Unfinished Maps");
 
   const { pos, rot, edgeOpacity } = useSpring({
     pos: unfold ? unfoldPosition : position,
@@ -172,32 +166,28 @@ function Face({
     >
       {/* Opaque backing so the folded cube reads as a solid box rather than a
           wireframe. FrontSide (not DoubleSide) so it is culled when a panel is
-          seen from behind — otherwise it would hide that panel's drawing.
-          Skipped entirely on the blank tiles, which stay see-through. */}
-      {!blankTile && (
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[CUBE_SIZE, CUBE_SIZE]} />
-          <a.meshBasicMaterial
-            transparent
-            opacity={entrance}
-            side={THREE.FrontSide}
-            color={BG_COLOR}
-          />
-        </mesh>
-      )}
+          seen from behind — otherwise it would hide that panel's drawing. */}
+      <mesh position={[0, 0, -0.01]}>
+        <planeGeometry args={[CUBE_SIZE, CUBE_SIZE]} />
+        <a.meshBasicMaterial
+          transparent
+          opacity={entrance}
+          side={THREE.FrontSide}
+          color={FACE_COLOR}
+        />
+      </mesh>
       <mesh>
         <planeGeometry args={[CUBE_SIZE, CUBE_SIZE]} />
         {texture ? (
           <TexturedFaceMaterial texture={texture} entrance={entrance} />
         ) : (
-          // blank panel — no image yet. The miscellaneous and Malacca Strait
-          // tiles stay fully transparent (only text + dotted edges show);
-          // any other blank face is white.
+          // blank panel — no image yet (the Malacca Strait top face, and the
+          // miscellaneous face with its "???"): plain solid white
           <a.meshBasicMaterial
             transparent
-            opacity={blankTile ? 0 : entrance}
+            opacity={entrance}
             side={THREE.DoubleSide}
-            color={BG_COLOR}
+            color={FACE_COLOR}
           />
         )}
       </mesh>
@@ -215,7 +205,7 @@ function Face({
       )}
       <FaceDottedEdges
         size={CUBE_SIZE}
-        opacity={edgeOpacity as unknown as number}
+        opacity={edgeOpacity}
       />
       {(hovered || isNearest) && (
         <Text
@@ -244,41 +234,40 @@ function TexturedFaceMaterial({
   entrance: any;
 }) {
   const tex = useTexture(asset(texture));
+  // Flatten the (mostly transparent) cover drawing onto the face colour, so
+  // the panel is solid on both sides: from inside the cube, or from behind an
+  // unfolded panel, it shows the same coloured paper rather than see-through
+  // gaps. The original backing plane only faces outwards, so it cannot do this.
+  const solid = useMemo(() => {
+    const img = tex.image as CanvasImageSource & { width: number; height: number };
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = FACE_COLOR;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const out = new THREE.CanvasTexture(canvas);
+    out.colorSpace = THREE.SRGBColorSpace;
+    out.anisotropy = tex.anisotropy;
+    return out;
+  }, [tex]);
+  useEffect(() => () => solid.dispose(), [solid]);
   return (
     <a.meshBasicMaterial
-      map={tex}
+      map={solid}
       transparent
       opacity={entrance}
-      alphaTest={0.1}
       side={THREE.DoubleSide}
       color={BG_COLOR}
     />
   );
 }
 
-// --- dotted box when folded ---
-function BoxDottedEdges({ opacity }: { opacity: number }) {
-  const geom = useMemo(
-    () =>
-      new THREE.EdgesGeometry(
-        new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE)
-      ),
-    []
-  );
-  useEffect(() => {
-    setDashDistances(geom);
-  }, [geom]);
-  return (
-    <a.lineSegments geometry={geom}>
-      <a.lineDashedMaterial
-        color={EDGE_COLOR}
-        dashSize={DASH_SIZE}
-        gapSize={GAP_SIZE}
-        transparent
-        opacity={opacity}
-      />
-    </a.lineSegments>
-  );
+// --- box outline when folded ---
+function BoxDottedEdges({ opacity }: { opacity: SpringNumber }) {
+  const geom = useMemo(() => new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE), []);
+  return <EdgeLines geometry={geom} opacity={opacity} />;
 }
 
 // --- cube wrapper ---
@@ -401,10 +390,11 @@ function Cube({
       },
     },
     {
-      position: [0, -half, 0],
-      rotation: [Math.PI / 2, 0, 0],
-      unfoldPosition: [0, -spread, 0],
-      unfoldRotation: [Math.PI / 2, 0, 0],
+      // left face (swapped with miscellaneous)
+      position: [-half, 0, 0],
+      rotation: [0, -Math.PI / 2, 0],
+      unfoldPosition: [-spread, 0, 0],
+      unfoldRotation: [0, -Math.PI / 2, 0],
       texture: "/ptf.png",
       project: {
         title: "Peter Tatchell Foundation",
@@ -452,10 +442,11 @@ function Cube({
       },
     },
     {
-      position: [-half, 0, 0],
-      rotation: [0, -Math.PI / 2, 0],
-      unfoldPosition: [-spread, 0, 0],
-      unfoldRotation: [0, -Math.PI / 2, 0],
+      // bottom face (swapped with Peter Tatchell)
+      position: [0, -half, 0],
+      rotation: [Math.PI / 2, 0, 0],
+      unfoldPosition: [0, -spread, 0],
+      unfoldRotation: [Math.PI / 2, 0, 0],
       texture: "", // no cover image — show a "?" in the middle instead
       project: {
         title: "miscellaneous",
@@ -472,7 +463,7 @@ function Cube({
 
   return (
     <a.group position-y={bounceY}>
-      {!unfold && <BoxDottedEdges opacity={boxOpacity as unknown as number} />}
+      {!unfold && <BoxDottedEdges opacity={boxOpacity} />}
       {faces.map((f, i) => (
         <Face
           key={i}
@@ -576,6 +567,19 @@ export default function App() {
     setOpenMiscGallery(null);
     // jump back to the top of the new project page
     projectPageRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
+  // Click-to-enlarge: one delegated handler on the project page opens any
+  // picture in the viewer, with the page's other pictures to step through.
+  const [viewer, setViewer] = useState<{ images: ViewerImage[]; index: number } | null>(null);
+  const openViewer = (e: React.MouseEvent) => {
+    const root = projectPageRef.current;
+    const img = (e.target as HTMLElement).closest("img");
+    if (!root || !img) return;
+    const imgs = collectImages(root);
+    const index = imgs.indexOf(img);
+    if (index === -1) return;
+    setViewer({ images: imgs.map(toViewerImage), index });
   };
 
   useEffect(() => {
@@ -741,7 +745,11 @@ export default function App() {
       )}
 
       {/* 3D Canvas */}
+      {/* `flat` turns off three's default filmic tone mapping, which would
+          render the white cube faces (and the pictures on them) a dull grey;
+          without it #fff draws as flat #fff, matching the page. */}
       <Canvas
+        flat
         camera={{
           // Phones start further back: the viewport is much narrower, so the
           // cube (and the unfolded panels) need the extra distance to fit.
@@ -777,6 +785,8 @@ export default function App() {
         <>
           <aWeb.div
             ref={projectPageRef}
+            className="project-page"
+            onClick={openViewer}
           style={{
             ...popupSpring,
             position: "absolute",
@@ -907,6 +917,15 @@ export default function App() {
           </button>
         </div>
         </>
+      )}
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.images}
+          index={viewer.index}
+          onIndex={(index) => setViewer({ ...viewer, index })}
+          onClose={() => setViewer(null)}
+        />
       )}
 
       {/* CV Page */}
