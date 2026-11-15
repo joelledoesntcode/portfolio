@@ -17,3 +17,10 @@ canvas {
 .project-page img:not(button img):not(a img) {
   cursor: zoom-in;
 }
+
+/* The app fills the visible screen. 100vh first as a fallback for browsers
+   without dynamic viewport units. */
+.app-root {
+  height: 100vh;
+  height: 100dvh;
+}
