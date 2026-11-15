@@ -654,10 +654,10 @@ export default function App() {
               // keep it em-based whenever the opening-page text/font changes.
               // px on phones so the logo size is independent of the type size
               // (em elsewhere, so it tracks the header text height)
-              height: phone ? "58px" : "1em",
+              height: phone ? "58px" : "3.2em",
               width: "auto",
               verticalAlign: "middle",
-              marginRight: phone ? 0 : "8px",
+              marginRight: phone ? 0 : "14px",
               flexShrink: 0,
             }}
           />
