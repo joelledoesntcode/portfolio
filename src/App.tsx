@@ -18,10 +18,9 @@ import ImageViewer, { collectImages, toViewerImage, type ViewerImage } from "./c
 
 const CUBE_SIZE = 11;
 const UNFOLD_MULTIPLIER = 1.4;
-const DASH_SIZE = CUBE_SIZE * 0.06;
-const GAP_SIZE = CUBE_SIZE * 0.035;
 const LINE_COLOR = "#888888";
-const EDGE_COLOR = "#000000";
+// a subtle grey hairline round the cube and each unfolded face
+const EDGE_COLOR = "#d4d4d4";
 const ACCENT_RED = "#8d0104";
 const LINE_OPACITY = 1;
 
@@ -68,43 +67,16 @@ type FaceProps = {
   entrance: any;
 };
 
-// --- helper for dashed lines ---
-function setDashDistances(geom: THREE.BufferGeometry) {
-  const pos = geom.attributes.position as THREE.BufferAttribute;
-  const count = pos.count;
-  const distances = new Float32Array(count);
-  for (let i = 0; i < count; i += 2) {
-    const sx = pos.getX(i),
-      sy = pos.getY(i),
-      sz = pos.getZ(i);
-    const ex = pos.getX(i + 1),
-      ey = pos.getY(i + 1),
-      ez = pos.getZ(i + 1);
-    const dx = ex - sx,
-      dy = ey - sy,
-      dz = ez - sz;
-    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    distances[i] = 0;
-    distances[i + 1] = len;
-  }
-  geom.setAttribute("lineDistance", new THREE.BufferAttribute(distances, 1));
-}
-
-// --- dotted outline of one face ---
+// --- outline of one face ---
 function FaceDottedEdges({ size, opacity }: { size: number; opacity: number }) {
   const geom = useMemo(
     () => new THREE.EdgesGeometry(new THREE.PlaneGeometry(size, size)),
     [size]
   );
-  useEffect(() => {
-    setDashDistances(geom);
-  }, [geom]);
   return (
     <a.lineSegments geometry={geom}>
-      <a.lineDashedMaterial
+      <a.lineBasicMaterial
         color={EDGE_COLOR}
-        dashSize={DASH_SIZE}
-        gapSize={GAP_SIZE}
         transparent
         opacity={opacity}
       />
@@ -257,7 +229,7 @@ function TexturedFaceMaterial({
   );
 }
 
-// --- dotted box when folded ---
+// --- box outline when folded ---
 function BoxDottedEdges({ opacity }: { opacity: number }) {
   const geom = useMemo(
     () =>
@@ -266,15 +238,10 @@ function BoxDottedEdges({ opacity }: { opacity: number }) {
       ),
     []
   );
-  useEffect(() => {
-    setDashDistances(geom);
-  }, [geom]);
   return (
     <a.lineSegments geometry={geom}>
-      <a.lineDashedMaterial
+      <a.lineBasicMaterial
         color={EDGE_COLOR}
-        dashSize={DASH_SIZE}
-        gapSize={GAP_SIZE}
         transparent
         opacity={opacity}
       />
@@ -755,7 +722,11 @@ export default function App() {
       )}
 
       {/* 3D Canvas */}
+      {/* `flat` turns off three's default filmic tone mapping, which would
+          render the white cube faces (and the pictures on them) a dull grey;
+          without it #fff draws as flat #fff, matching the page. */}
       <Canvas
+        flat
         camera={{
           // Phones start further back: the viewport is much narrower, so the
           // cube (and the unfolded panels) need the extra distance to fit.
