@@ -607,7 +607,10 @@ export default function App() {
   });
 
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+    // 100dvh, not 100vh: on phones 100vh is the height with the browser's
+    // toolbars hidden, so anything pinned to the bottom (the contact /
+    // projects / cv bar) would sit behind the toolbar, off screen.
+    <div className="app-root" style={{ width: "100%", position: "relative" }}>
       {/* Fonts + Styles */}
       <link
         href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap"
