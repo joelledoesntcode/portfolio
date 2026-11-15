@@ -65,7 +65,7 @@ const body: React.CSSProperties = {
 const SMOKEHOUSE_TEXT =
   "Studying Scandinavia's iconic smokehouses inspired a merging of the traditional roof and tower-like smokestack, their abstracted forms giving rise to a deconstructive architecture rooted in tradition.";
 const MARKET_TEXT =
-  "The market invites sensory engagement, its openness carrying aromas through the air and fish displayed like works of art. Tradition here is not only seen, but experienced.";
+  "The market invites sensory engagement, its openness carrying aromas through the air and fish displayed like works of art.";
 
 // --- desktop: two-partition segments (see Segments.tsx) -----------------------
 //
@@ -104,7 +104,11 @@ function FishMarketSegments({
               </>
             }
           >
-            <p style={body}>{description}</p>
+            {description.split("\n\n").map((para, i) => (
+              <p key={i} style={{ ...body, margin: i > 0 ? "10px 0 0 0" : 0 }}>
+                {para}
+              </p>
+            ))}
           </TitleBlock>
           {/* Docked bottom-right, like the Pilgrim culverts. In partition
               terms siteplan is 45% wide (1.38, so ~33% tall) and vern3 29.4%
@@ -196,7 +200,11 @@ export default function ProjectFishMarket({ title, description, images }: Props)
               <br />
               Undergraduate Project Year 3
             </p>
-            <p style={body}>{description}</p>
+            {description.split("\n\n").map((para, i) => (
+              <p key={i} style={{ ...body, margin: i > 0 ? "10px 0 0 0" : 0 }}>
+                {para}
+              </p>
+            ))}
           </Block>
 
           {/* Caption paragraph below the undergif.gif — same column width/font as

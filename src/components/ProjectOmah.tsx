@@ -25,7 +25,7 @@ const CELLS: { top: number; left: number; width: number; height: number }[] = [
   { top: 112, left: 9, width: 20, height: 13 }, // omah_ver1
   { top: 144, left: 18, width: 20, height: 13 }, // omah_ver2 (under ver1)
   { top: 154, left: 30, width: 80, height: 52 }, // omah_plan
-  { top: 218, left: -10, width: 72, height: 48 }, // diaomah
+  { top: 188, left: -37, width: 72, height: 48 }, // diaomah
 ];
 
 // Canvas height = lowest image bottom + top margin, so bottom margin == top margin.
@@ -60,6 +60,12 @@ const captionColumn = (phone: boolean): React.CSSProperties => ({
   padding: phone ? 0 : "0 24px 0 12px",
   boxSizing: "border-box",
 });
+
+// The intro, shared by the desktop and phone layouts.
+const INTRO_TEXT = [
+  "In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. My proposal envisions a cultural hub to revitalize traditional trade with a sustainable model.",
+  "It integrates competition and reward through community building to engage participants, fostering motivation for achievement.",
+];
 
 // The three villager quotes, shared by the desktop and phone layouts.
 const QUOTES = {
@@ -96,15 +102,7 @@ function Quote({ q }: { q: { text: string; by: string } }) {
 //   2. left: omah1.gif, the mother's quote under it.  right: the two weaving
 //      images, at the top, each with its quote under it.
 //   3. left: the five diaomah stages as a bento.  right: the plan.
-function OmahSegments({
-  title,
-  description,
-  images,
-}: {
-  title: string;
-  description: string;
-  images: CollageImage[];
-}) {
+function OmahSegments({ title, images }: { title: string; images: CollageImage[] }) {
   // look images up by file so the layout doesn't depend on array order
   const img = (name: string) =>
     (images.find((im) => im.src === name) ?? { src: name }).src;
@@ -117,7 +115,7 @@ function OmahSegments({
             title={title}
             meta={
               <>
-                “House of Dreams”: A Beacon of Cultural Education
+                “house of dreams”
                 <br />
                 Rembitan Village, Lombok, Indonesia
                 <br />
@@ -125,15 +123,14 @@ function OmahSegments({
               </>
             }
           >
-            <p style={{ ...italic, marginTop: "14px" }}>
-              ‘The Actions Of Others Affect The Way I Act, And My Actions Affect The Decisions Of Others’
-            </p>
-            <p style={{ ...line, margin: "0 0 16px 0" }}>
-              - Salen, K., Walz, s. P., &amp; Deterding, s. (Eds.). (2014). The Gameful World: Approaches, Issues, Applications. MIT press.
-            </p>
-            <p style={{ ...line, textAlign: "justify" }}>
-              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. {description}
-            </p>
+            {INTRO_TEXT.map((para, i) => (
+              <p
+                key={i}
+                style={{ ...line, textAlign: "justify", margin: i === 0 ? "14px 0 16px 0" : 0 }}
+              >
+                {para}
+              </p>
+            ))}
           </TitleBlock>
           {/* under the project text, docked to the bottom like the Pilgrim
               culverts. ver1 (1.59) 38% and ver2 (1.92) 45.9% are both ~24%
@@ -221,10 +218,10 @@ function OmahSegments({
   );
 }
 
-export default function ProjectOmah({ title, description, images }: Props) {
+export default function ProjectOmah({ title, images }: Props) {
   const phone = usePhone();
   if (!phone) {
-    return <OmahSegments title={title} description={description} images={images} />;
+    return <OmahSegments title={title} images={images} />;
   }
 
   return (
@@ -241,7 +238,7 @@ export default function ProjectOmah({ title, description, images }: Props) {
               {title}
             </h1>
             <p style={{ ...line, ...META_TEXT, margin: "0 0 4px 0" }}>
-              “House of Dreams”: A Beacon of Cultural Education
+              “house of dreams”
             </p>
             <p style={{ ...line, ...META_TEXT, margin: "0 0 2px 0" }}>
               Rembitan Village, Lombok, Indonesia
@@ -249,20 +246,16 @@ export default function ProjectOmah({ title, description, images }: Props) {
             <p style={{ ...line, ...META_TEXT, margin: "0 0 24px 0" }}>
               Self-initiated project for Titian Foundation (2024)
             </p>
-            <p style={italic}>
-              ‘The Actions Of Others Affect The Way I Act, And My Actions Affect The Decisions Of Others’
-            </p>
-            <p style={{ ...line, margin: "0 0 16px 0" }}>
-              - Salen, K., Walz, s. P., &amp; Deterding, s. (Eds.). (2014). The Gameful World: Approaches, Issues, Applications. MIT press.
-            </p>
           </Block>
 
           {/* "In Rembitan..." split out of the title block, moved 10 right and 5
               down from its original column position. */}
           <Block phone={phone} spec={INTRO} style={textColumn(phone)}>
-            <p style={{ ...line, textAlign: "justify" }}>
-              In Rembitan village, women weave ethnic crafts for income but lack financial control, deepening gender inequality. {description}
-            </p>
+            {INTRO_TEXT.map((para, i) => (
+              <p key={i} style={{ ...line, textAlign: "justify", margin: i === 0 ? "0 0 16px 0" : 0 }}>
+                {para}
+              </p>
+            ))}
           </Block>
 
           {/* Quote above omah_weave1 (cell top 96vh). */}
